@@ -27,42 +27,68 @@ namespace Parser {
       while (isalnum((code_data[++last_char_pos]))) {
         identifier_str += code_data[last_char_pos];
       }
+      if (identifier_str == noop::Token[TOKEN::VAR_DECLARATION].name) {
+        DEBUG << identifier_str << endl;
+        return TOKEN::VAR_DECLARATION;
+      }
+      temp_data = new StringNode(identifier_str);
+      return TOKEN::NAME;
     }
-    DEBUG << code_data << endl;
-    if (identifier_str == noop::Token[TOKEN::VAR_DECLARATION].name) {
-      DEBUG << identifier_str << endl;
-      return 1;
-    }
+
     if (code_data[last_char_pos] == '\"') {
-      val = u"";
-      while (true) {
-        if (code_data[last_char_pos - 1] == '\\' &&
-            code_data[last_char_pos] == '\"') {
-          break;
-        }
-        val += code_data[last_char_pos];
-        last_char_pos++;
+      identifier_str = u"";
+      int ahead_pos = last_char_pos;
+      while (!(code_data[++last_char_pos] == '\"' &&
+             code_data[ahead_pos] != '\\'))  {
+        identifier_str += code_data[++ahead_pos];
       }
+      temp_data = new StringNode(identifier_str);
+      return TOKEN::NAME;
     }
-    return 0;
-  }
-  /*
-  void Test() {
-    GetNextToken();
-    while (true) {
-      if (current_token == Token::VAR_DECLARATION) {
-        HandleVarDeclaration();
-      } else {
-        HandleTopLevelExpression();
-      }
+
+    if (code_data == '=') {
+      ++last_char_pos;
+      return TOKEN::ASSIGN;
     }
+
+    if (code_data == ';') {
+      ++last_char_pos;
+      return TOKEN::SEMICOLON;
+    }
+
+    return TOKEN::BLANK;
   }
-  */
+
+  int GetNextToken() {
+    return current_token = GetToken();
+  };
 
   void ParseSpace(u16string& data, int& current_pos) {
     while (isspace(data[current_pos])) {
       ++current_pos;
     }
+  }
+
+  VarDeclarationStatement* ParserVar() {
+    GetNextToken(); // eat var
+    VarDeclarationStatement* temp;
+    int this_token;
+    while (true) {
+      GetToken(); // eat name
+      this_token = GetToken();
+      if (this_token == TOKEN::ASSIGN) {
+        u16string this_name = identifier_str;
+        GetToken();
+        temp.push_back(make_pair(this_name, temp_data));
+      } else if (this_token == TOKEN::SEMICOLON) {
+        break;
+      }
+    }
+    return temp;
+  }
+
+  void HandleVarDeclaration() {
+    body.push_back(ParserVar());
   }
 } // namespace Parser
 } // namespace noop

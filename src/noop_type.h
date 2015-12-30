@@ -11,14 +11,15 @@ enum TOKEN {
   EOS,    // EOS
 
   /* Punctuators */
-  LPAREN, // (
-  RPAREN, // )
-  LBRACK, // [
-  RBRACK, // ]
-  LBRACE, // {
-  RBRACE, // }
-  PERIOD, // .
-  COMMA,  // ,
+  LPAREN,     // (
+  RPAREN,     // )
+  LBRACK,     // [
+  RBRACK,     // ]
+  LBRACE,     // {
+  RBRACE,     // }
+  PERIOD,     // .
+  COMMA,      // ,
+  SEMICOLON,  // ;
 
   /* Statement */
   VAR_DECLARATION,        // var x[ = ...];
@@ -44,12 +45,13 @@ enum TOKEN {
   GTE,        // >=
   LTE,        // <=
   AND,        // &&
-  OR          // ||
-};
-
-enum StatementType {
-  NUM,
-  BOOL
+  OR,         // ||
+  INIT,
+  NUMBER,     // [0-9.]+
+  BOOL,       // true | false
+  NAME,       // [a-zA-Z][a-zA-Z0-9]*
+  DATA,
+  BLANK,
 };
 
 class TokenType {
@@ -61,6 +63,64 @@ public:
 };
 
 extern std::vector<TokenType> Token;
+
+/* AST NodeType */
+class Node {
+public:
+  TOKEN type;
+  virtual TOKEN GetType() const { return type; };
+  virtual ~Node() {};
+};
+
+class Statement: public Node {
+public:
+  virtual Node* Execute();
+};
+
+class DataNode: public Node {
+public:
+  TOKEN type_;
+  virtual TOKEN GetType_() const { return type_; };
+  DataNode() { type = TOKEN::DATA; };
+};
+
+class NumberNode: public DataNode {
+public:
+  double val;
+  NumberNode(double _val): val(_val) { type_ = TOKEN::NUMBER; };
+};
+
+class StringNode: public DataNode {
+public:
+  std::u16string val;
+  StringNode(std::u16string _val): val(_val) { type_ = TOKEN::STRING; };
+};
+
+class VariableNode: public Node {
+public:
+  std::u16string name;
+  VariableNode(const std::u16string& _name): name(_name) { type = TOKEN::STRING; };
+};
+
+class Expression: public Statement {
+public:
+  TOKEN type_;
+  virtual TOKEN GetType_() const { return type_; };
+  Expression() { type = TOKEN::EXPRESSION; };
+};
+
+class AtomExpr: public Expression {
+public:
+  AtomExpr() { type_ = TOKEN::INIT; };
+  Node* Execute();
+};
+
+class VarDeclarationStatement: public Statement {
+private:
+  std::vector<std::pair<std::u16string, Expression*> > vars;
+public:
+  Node* Execute();
+};
 
 /*
 // AST NodeType

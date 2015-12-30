@@ -6,6 +6,7 @@
 #include <noop.h>
 #include <noop_io.h>
 #include <noop_parser.h>
+#include <noop_type.h>
 
 using namespace std;
 
@@ -32,6 +33,15 @@ int ExecuteFromFile(string script) {
   code = noop::Encoding::UTF8ToUTF16(content);
   noop::Parser::InitData(code);
   noop::Parser::GetToken();
+  while (true) {
+    switch (current_token) {
+      case TOKEN::VAR_DECLARATION:
+        noop::Parser::HandleVarDeclaration();
+        break;
+      default:
+        return 0;
+    }
+  }
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
   // noop::Parser::ParseBody(code);
