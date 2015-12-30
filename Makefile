@@ -1,29 +1,43 @@
 CXX = clang++
-CXXFLAGS = -O -W -Wall -Werror -g --std=c++11
+CXXFLAGS = -O -W -Wall -g --std=c++11
 LINK = $(CXX)
 
 ALL_INCS = -I src
-ALL_DEPS = src/noop.h \
-					 src/noop_core.h \
-					 src/noop_io.h \
-					 src/noop_switches.h \
 
-noop: src/noop.o src/noop_core.o src/noop_io.o src/noop_switches.o
-	$(LINK) -o noop \
-					src/noop.o src/noop_core.o src/noop_io.o src/noop_switches.o
+SRC_PATH := ./src
 
-src/noop.o: $(ALL_DEPS) src/noop.cc
-	$(CXX) -c $(CXXFLAGS) $(ALL_INCS) \
-					-o src/noop.o src/noop.cc
+ALL_DEPS = $(SRC_PATH)/noop.h \
+					 $(SRC_PATH)/noop_core.h \
+					 $(SRC_PATH)/noop_io.h \
+					 $(SRC_PATH)/noop_switches.h \
+					 $(SRC_PATH)/noop_parser.h \
+					 $(SRC_PATH)/noop_type.h
 
-src/noop_core.o: $(ALL_DEPS) src/noop_core.cc
-	$(CXX) -c $(CXXFLAGS) $(ALL_INCS) \
-					-o src/noop_core.o src/noop_core.cc
+ALL_OBJS := $(SRC_PATH)/noop.o \
+					 $(SRC_PATH)/noop_core.o \
+					 $(SRC_PATH)/noop_io.o \
+					 $(SRC_PATH)/noop_switches.o \
+					 $(SRC_PATH)/noop_parser.o \
+					 $(SRC_PATH)/noop_type.o
 
-src/noop_io.o: $(ALL_DEPS) src/noop_io.cc
-	$(CXX) -c $(CXXFLAGS) $(ALL_INCS) \
-					-o src/noop_io.o src/noop_io.cc
 
-src/noop_switches.o: $(ALL_DEPS) src/noop_switches.cc
-	$(CXX) -c $(CXXFLAGS) $(ALL_INCS) \
-					-o src/noop_switches.o src/noop_switches.cc
+noop: noop.o noop_core.o noop_io.o noop_switches.o noop_parser.o noop_type.o
+	$(LINK) $(ALL_OBJS) -o noop
+
+noop.o: $(SRC_PATH)/noop.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+
+noop_core.o: $(SRC_PATH)/noop_core.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+
+noop_io.o: $(SRC_PATH)/noop_io.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+
+noop_switches.o: $(SRC_PATH)/noop_switches.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+
+noop_parser.o: $(SRC_PATH)/noop_parser.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+
+noop_type.o: $(SRC_PATH)/noop_type.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
