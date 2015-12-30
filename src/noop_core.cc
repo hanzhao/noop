@@ -5,6 +5,7 @@
 
 #include <noop.h>
 #include <noop_io.h>
+#include <noop_parser.h>
 
 using namespace std;
 
@@ -29,6 +30,8 @@ int ExecuteFromFile(string script) {
   }
   /* Convert code from UTF-8 to UTF-16 */
   code = noop::Encoding::UTF8ToUTF16(content);
+  noop::Parser::InitData(code);
+  noop::Parser::GetToken();
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
   // noop::Parser::ParseBody(code);
