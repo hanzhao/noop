@@ -49,7 +49,7 @@ enum TOKEN {
   INIT,
   NUMBER,     // [0-9.]+
   BOOL,       // true | false
-  NAME,       // [a-zA-Z][a-zA-Z0-9]*
+  STRING,       // [a-zA-Z][a-zA-Z0-9]*
   DATA,
   BLANK,
 };
@@ -111,14 +111,15 @@ public:
 
 class AtomExpr: public Expression {
 public:
+  DataNode* data;
   AtomExpr() { type_ = TOKEN::INIT; };
+  AtomExpr(DataNode* _data): data(_data) { type_ = TOKEN::INIT; };
   Node* Execute();
 };
 
 class VarDeclarationStatement: public Statement {
-private:
-  std::vector<std::pair<std::u16string, Expression*> > vars;
 public:
+  std::vector<std::pair<std::u16string, Expression*> > vars;
   Node* Execute();
 };
 

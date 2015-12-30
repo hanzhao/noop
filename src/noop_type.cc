@@ -17,7 +17,7 @@ namespace noop {
     Token.push_back(TokenType(u"}", "", 0));
     Token.push_back(TokenType(u".", "", 0));
     Token.push_back(TokenType(u",", "", 0));
-    Token.push_back(TokenType(u";", "", 0) 
+    Token.push_back(TokenType(u";", "", 0)); 
     Token.push_back(TokenType(u"var", "", 0));
     Token.push_back(TokenType(u"if", "", 0));
     Token.push_back(TokenType(u"else", "", 0));

@@ -11,7 +11,7 @@ namespace Parser {
   std::u16string identifier_str;
   std::u16string val;
   std::u16string code_data;
-  Node* temp_data;
+  DataNode* temp_data;
   int current_token;
   int statement_token;
   std::vector<Statement*> body;

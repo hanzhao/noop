@@ -34,9 +34,9 @@ namespace Parser {
         return TOKEN::VAR_DECLARATION;
       }
       temp_data = new StringNode(identifier_str);
-      return TOKEN::NAME;
+      return TOKEN::STRING;
     }
-    
+
     if (code_data[last_char_pos] == '\"') {
       identifier_str = u"";
       int ahead_pos = last_char_pos;
@@ -45,15 +45,15 @@ namespace Parser {
         identifier_str += code_data[++ahead_pos];
       }
       temp_data = new StringNode(identifier_str);
-      return TOKEN::NAME;
+      return TOKEN::STRING;
     }
 
-    if (code_data == '=') {
+    if (code_data[last_char_pos] == '=') {
       ++last_char_pos;
       return TOKEN::ASSIGN;
     }
 
-    if (code_data == ';') {
+    if (code_data[last_char_pos] == ';') {
       ++last_char_pos;
       return TOKEN::SEMICOLON;
     }
@@ -81,7 +81,8 @@ namespace Parser {
       if (this_token == TOKEN::ASSIGN) {
         u16string this_name = identifier_str;
         GetToken();
-        temp.push_back(make_pair(this_name, temp_data));
+        AtomExpr* atom = new AtomExpr(temp_data);
+        temp->vars.push_back(make_pair(this_name, atom));
       } else if (this_token == TOKEN::SEMICOLON) {
         break;
       }

@@ -34,7 +34,7 @@ int ExecuteFromFile(string script) {
   noop::Parser::InitData(code);
   noop::Parser::GetToken();
   while (true) {
-    switch (current_token) {
+    switch (Parser::current_token) {
       case TOKEN::VAR_DECLARATION:
         noop::Parser::HandleVarDeclaration();
         break;
