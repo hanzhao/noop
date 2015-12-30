@@ -7,15 +7,17 @@
 #include <iostream>
 
 using namespace std;
-using namespace noop;
+
 
 namespace noop {
 namespace Parser {
+
+  vector<TokenType> Token;
+
   void InitData(u16string& data) {
     code_data = data;
-    std::vector<TokenType> Token;
     if (Token.size() == 0) {
-      noop::InitToken();
+      InitToken();
     }
   }
 
@@ -34,7 +36,7 @@ namespace Parser {
       temp_data = new StringNode(identifier_str);
       return TOKEN::NAME;
     }
-
+    
     if (code_data[last_char_pos] == '\"') {
       identifier_str = u"";
       int ahead_pos = last_char_pos;

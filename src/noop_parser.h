@@ -5,23 +5,22 @@
 #include <noop_type.h>
 #include <vector>
 
-using namespace std;
-
 namespace noop {
 namespace Parser {
-  u16string identifier_str;
-  u16string val;
-  u16string code_data;
+  extern std::vector<TokenType> Token;
+  std::u16string identifier_str;
+  std::u16string val;
+  std::u16string code_data;
   Node* temp_data;
   int current_token;
   int statement_token;
   std::vector<Statement*> body;
 
-  void InitData(u16string& data);
+  void InitData(std::u16string& data);
   int GetToken();
-  void ParseSpace(u16string&, int&);
   void HandleVarDeclaration();
   int GetNextToken();
+  void ParseSpace(std::u16string&, int&);
 } // namespace Parser
 } // namespace noop
 #endif // NOOP_PARSER_H
