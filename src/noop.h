@@ -5,7 +5,8 @@
 namespace noop {
 
 extern int debug;
-#define DEBUG if (noop::debug) std::cout << "[DEBUG] "
+#define DEBUG if (noop::debug) \
+  std::cout << "\033[1m\033[32m[DEBUG]\033[0m "
 
 } // namespace noop
 

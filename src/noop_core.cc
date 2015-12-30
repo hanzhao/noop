@@ -1,11 +1,10 @@
 #include <noop_core.h>
 
-#include <codecvt>
-#include <iostream>
 #include <fstream>
-#include <locale>
+#include <iostream>
 
 #include <noop.h>
+#include <noop_io.h>
 
 using namespace std;
 
@@ -29,10 +28,10 @@ int ExecuteFromFile(string script) {
     content += buff;
   }
   /* Convert code from UTF-8 to UTF-16 */
-  wstring_convert<codecvt_utf8_utf16<char16_t>, char16_t> cvt;
-  code = cvt.from_bytes(content);
+  code = noop::Encoding::UTF8ToUTF16(content);
+  DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
-  noop::Parser::ParseStatement(code);
+  // noop::Parser::ParseBody(code);
   return 0;
 }
 
