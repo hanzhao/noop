@@ -7,15 +7,17 @@
 #include <iostream>
 
 using namespace std;
-using namespace noop;
+
 
 namespace noop {
 namespace Parser {
+
+  vector<TokenType> Token;
+
   void InitData(u16string& data) {
     code_data = data;
-    std::vector<TokenType> Token;
     if (Token.size() == 0) {
-      noop::InitToken();
+      InitToken();
     }
   }
 
@@ -29,7 +31,7 @@ namespace Parser {
       }
     }
     DEBUG << code_data << endl;
-    if (identifier_str == noop::Token[TOKEN::VAR_DECLARATION].name) {
+    if (identifier_str == Token[TOKEN::VAR_DECLARATION].name) {
       DEBUG << identifier_str << endl;
       return 1;
     }

@@ -60,8 +60,6 @@ public:
     : name(_name), type(_type), prec(_prec) {};
 };
 
-extern std::vector<TokenType> Token;
-
 /*
 // AST NodeType
 class Node {
