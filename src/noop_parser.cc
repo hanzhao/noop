@@ -13,6 +13,8 @@ namespace noop {
 namespace Parser {
 
   vector<TokenType> Token;
+  int current_token;
+  std::vector<Statement*> body;
 
   void InitData(u16string& data) {
     code_data = data;
@@ -30,7 +32,7 @@ namespace Parser {
         identifier_str += code_data[last_char_pos];
       }
       if (identifier_str == noop::Token[TOKEN::VAR_DECLARATION].name) {
-        DEBUG << identifier_str << endl;
+        // DEBUG << "identifier_str:" << identifier_str << endl;
         return TOKEN::VAR_DECLARATION;
       }
       temp_data = new StringNode(identifier_str);
@@ -44,6 +46,7 @@ namespace Parser {
              code_data[ahead_pos] != '\\'))  {
         identifier_str += code_data[++ahead_pos];
       }
+      ++last_char_pos;
       temp_data = new StringNode(identifier_str);
       return TOKEN::STRING;
     }
@@ -72,16 +75,14 @@ namespace Parser {
   }
 
   VarDeclarationStatement* ParserVar() {
-    GetNextToken(); // eat var
-    VarDeclarationStatement* temp;
+    VarDeclarationStatement* temp = new VarDeclarationStatement();
     int this_token;
     while (true) {
-      GetToken(); // eat name
       this_token = GetToken();
       if (this_token == TOKEN::ASSIGN) {
         u16string this_name = identifier_str;
         GetToken();
-        AtomExpr* atom = new AtomExpr(temp_data);
+        Expression* atom = new AtomExpr(temp_data);
         temp->vars.push_back(make_pair(this_name, atom));
       } else if (this_token == TOKEN::SEMICOLON) {
         break;
@@ -92,6 +93,7 @@ namespace Parser {
 
   void HandleVarDeclaration() {
     body.push_back(ParserVar());
+    GetNextToken();
   }
 } // namespace Parser
 } // namespace noop

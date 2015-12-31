@@ -57,8 +57,9 @@ enum TOKEN {
 class TokenType {
 public:
   std::u16string name;
-  std::string type, prec;
-  TokenType(std::u16string _name, std::string _type, std::string _prec)
+  TOKEN type;
+  int prec;
+  TokenType(std::u16string _name, TOKEN _type, int _prec = 0)
     : name(_name), type(_type), prec(_prec) {};
 };
 
@@ -74,7 +75,8 @@ public:
 
 class Statement: public Node {
 public:
-  virtual Node* Execute();
+  virtual Node* Execute() = 0;
+  virtual void Print() = 0;
 };
 
 class DataNode: public Node {
@@ -82,18 +84,21 @@ public:
   TOKEN type_;
   virtual TOKEN GetType_() const { return type_; };
   DataNode() { type = TOKEN::DATA; };
+  virtual void Print() = 0;
 };
 
 class NumberNode: public DataNode {
 public:
   double val;
   NumberNode(double _val): val(_val) { type_ = TOKEN::NUMBER; };
+  void Print();
 };
 
 class StringNode: public DataNode {
 public:
   std::u16string val;
   StringNode(std::u16string _val): val(_val) { type_ = TOKEN::STRING; };
+  void Print();
 };
 
 class VariableNode: public Node {
@@ -115,12 +120,15 @@ public:
   AtomExpr() { type_ = TOKEN::INIT; };
   AtomExpr(DataNode* _data): data(_data) { type_ = TOKEN::INIT; };
   Node* Execute();
+  void Print();
 };
 
 class VarDeclarationStatement: public Statement {
 public:
   std::vector<std::pair<std::u16string, Expression*> > vars;
+  VarDeclarationStatement() { type = TOKEN::VAR_DECLARATION; };
   Node* Execute();
+  void Print();
 };
 
 /*

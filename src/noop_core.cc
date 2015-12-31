@@ -32,13 +32,17 @@ int ExecuteFromFile(string script) {
   /* Convert code from UTF-8 to UTF-16 */
   code = noop::Encoding::UTF8ToUTF16(content);
   noop::Parser::InitData(code);
-  noop::Parser::GetToken();
+  noop::Parser::GetNextToken();
   while (true) {
     switch (Parser::current_token) {
       case TOKEN::VAR_DECLARATION:
         noop::Parser::HandleVarDeclaration();
         break;
       default:
+        for (unsigned long i = 0; i < Parser::body.size(); ++i) {
+          DEBUG << "Body: " << i << endl;
+          Parser::body[i]->Print();
+        }
         return 0;
     }
   }
