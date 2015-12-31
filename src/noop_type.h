@@ -1,7 +1,7 @@
 #ifndef NOOP_TYPE_H
 #define NOOP_TYPE_H
 
-#include <string>
+#include <noop.h>
 #include <vector>
 
 namespace noop {
@@ -56,10 +56,10 @@ enum TOKEN {
 
 class TokenType {
 public:
-  std::u16string name;
+  String name;
   TOKEN type;
   int prec;
-  TokenType(std::u16string _name, TOKEN _type, int _prec = 0)
+  TokenType(String _name, TOKEN _type, int _prec = 0)
     : name(_name), type(_type), prec(_prec) {};
 };
 
@@ -96,15 +96,15 @@ public:
 
 class StringNode: public DataNode {
 public:
-  std::u16string val;
-  StringNode(std::u16string _val): val(_val) { type_ = TOKEN::STRING; };
+  String val;
+  StringNode(String _val): val(_val) { type_ = TOKEN::STRING; };
   void Print();
 };
 
 class VariableNode: public Node {
 public:
-  std::u16string name;
-  VariableNode(const std::u16string& _name): name(_name) { type = TOKEN::STRING; };
+  String name;
+  VariableNode(const String& _name): name(_name) { type = TOKEN::STRING; };
 };
 
 class Expression: public Statement {
@@ -125,7 +125,7 @@ public:
 
 class VarDeclarationStatement: public Statement {
 public:
-  std::vector<std::pair<std::u16string, Expression*> > vars;
+  std::vector<std::pair<String, Expression*> > vars;
   VarDeclarationStatement() { type = TOKEN::VAR_DECLARATION; };
   Node* Execute();
   void Print();
@@ -159,9 +159,9 @@ public:
 };
 
 class StringNode: Node {
-  std::u16string val;
+  String val;
 public:
-  StringNode(std::u16string _val): val(_val) {}
+  StringNode(String _val): val(_val) {}
 };
 
 class Expression: public Statement {
@@ -171,7 +171,7 @@ class Expression: public Statement {
 // Expression is Atom 'undefined' when ```var c;```
 class VarDeclarationStatement: public Statement {
 private:
-  std::vector<std::pair<std::u16string, Expression>> vars;
+  std::vector<std::pair<String, Expression>> vars;
 public:
   bool Execute(NoopScope& scope, NoopObject& ret) {
     // TODO
@@ -226,8 +226,8 @@ private:
 // function func(...arguments) { body }
 class FunctionDeclarationExpression: public Expression {
 private:
-  std::u16string func_name; // Empty when it's anonymous
-  std::vector<std::u16string> arguments;
+  String func_name; // Empty when it's anonymous
+  std::vector<String> arguments;
   Body body;
 };
 */

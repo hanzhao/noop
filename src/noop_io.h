@@ -1,18 +1,18 @@
 #ifndef NOOP_IO_H
 #define NOOP_IO_H
 
-#include <iostream>
-#include <string>
+#include <noop.h>
 
 
 namespace noop {
 
-std::ostream& operator <<(std::ostream& out, const std::u16string u16_str);
-std::ostream& operator <<(std::ostream& out, const char16_t u16_chr);
+std::ostream& operator <<(std::ostream& out, const String u32_str);
+std::ostream& operator <<(std::ostream& out, const Char u32_chr);
 
 namespace Encoding {
 
-std::u16string UTF8ToUTF16(std::string u8_str);
+String UTF8ToUTF32(std::string u8_str);
+std::string UTF32ToUTF8(String u32_str);
 
 } // namespace Encoding
 

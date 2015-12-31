@@ -21,7 +21,7 @@ int ExecuteFromFile(string script) {
     return -1;
   }
   string content = "", buff;
-  u16string code; // We need to use utf-16 inside.
+  String code; // We need to use utf-32 inside.
   bool flag = false;
   /* Read entire file and standardize EOL */
   while (getline(fin, buff)) {
@@ -29,8 +29,8 @@ int ExecuteFromFile(string script) {
     flag = true;
     content += buff;
   }
-  /* Convert code from UTF-8 to UTF-16 */
-  code = noop::Encoding::UTF8ToUTF16(content);
+  /* Convert code from UTF-8 to UTF-32 */
+  code = noop::Encoding::UTF8ToUTF32(content);
   noop::Parser::InitData(code);
   noop::Parser::GetNextToken();
   while (true) {

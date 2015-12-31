@@ -1,4 +1,5 @@
 #include <noop_parser.h>
+
 #include <noop.h>
 #include <noop_io.h>
 #include <noop_type.h>
@@ -16,7 +17,7 @@ namespace Parser {
   int current_token;
   std::vector<Statement*> body;
 
-  void InitData(u16string& data) {
+  void InitData(String& data) {
     code_data = data;
     if (Token.size() == 0) {
       InitToken();
@@ -40,7 +41,7 @@ namespace Parser {
     }
 
     if (code_data[last_char_pos] == '\"') {
-      identifier_str = u"";
+      identifier_str = U"";
       int ahead_pos = last_char_pos;
       while (!(code_data[++last_char_pos] == '\"' &&
              code_data[ahead_pos] != '\\'))  {
@@ -68,7 +69,7 @@ namespace Parser {
     return current_token = GetToken();
   };
 
-  void ParseSpace(u16string& data, int& current_pos) {
+  void ParseSpace(String& data, int& current_pos) {
     while (isspace(data[current_pos])) {
       ++current_pos;
     }
@@ -80,7 +81,7 @@ namespace Parser {
     while (true) {
       this_token = GetToken();
       if (this_token == TOKEN::ASSIGN) {
-        u16string this_name = identifier_str;
+        String this_name = identifier_str;
         GetToken();
         Expression* atom = new AtomExpr(temp_data);
         temp->vars.push_back(make_pair(this_name, atom));
