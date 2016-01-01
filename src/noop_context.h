@@ -13,5 +13,7 @@ struct Context {
   Context(Context* father): father(father) {}
   int LookUp(String s);
 };
+
+extern Context *global_context;
 } // noop
 #endif

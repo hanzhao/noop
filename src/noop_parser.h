@@ -2,6 +2,7 @@
 #define NOOP_PARSER_H
 
 #include <noop.h>
+#include <noop_context.h>
 
 #include <vector>
 
@@ -83,12 +84,13 @@ enum {
 /* Just an interface */
 struct SyntaxTreeNode {
   int type;
+  virtual bool Execute() = 0;
 };
 
 /* SyntaxTreeNode */
 
 struct Expression: SyntaxTreeNode {
-  /* TODO */
+  virtual bool Execute() = 0;
 };
 
 struct Literal: Expression {
@@ -179,7 +181,7 @@ struct NullLiteral: Literal {
 
 /* Just an interface */
 struct Statement: SyntaxTreeNode {
-
+  virtual bool Execute() = 0;
 };
 
 struct VariableDeclarator: SyntaxTreeNode {
@@ -188,6 +190,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   VariableDeclarator() {
     type = SyntaxTreeNodeType::VariableDeclarator;
   }
+  virtual bool Execute();
 };
 
 struct VariableStatement: Statement {
@@ -196,13 +199,19 @@ struct VariableStatement: Statement {
   VariableStatement() {
     type = SyntaxTreeNodeType::VariableStatement;
   }
+  virtual bool Execute();
 };
 
 struct ExpressionStatement: Statement {
+<<<<<<< 631529c222996333910f82a35f373521fc9116f8
   Expression* expression;
   ExpressionStatement() {
     type = SyntaxTreeNodeType::ExpressionStatement;
   }
+=======
+  virtual bool Execute();
+  /* TODO */
+>>>>>>> finish declaration
 };
 
 struct Body: Statement {
@@ -210,6 +219,7 @@ struct Body: Statement {
   Body() {
     type = SyntaxTreeNodeType::Body;
   }
+  virtual bool Execute();
 };
 
 struct Program: SyntaxTreeNode {
@@ -217,6 +227,7 @@ struct Program: SyntaxTreeNode {
   Program() {
     type = SyntaxTreeNodeType::Program;
   }
+  virtual bool Execute();
 };
 
 /* SyntaxTreeResolver */
@@ -275,7 +286,6 @@ public:
 };
 
 extern SyntaxTree delegate;
-
 } // namespace noop
 
 #endif // NOOP_PARSER_H

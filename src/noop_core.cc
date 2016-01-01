@@ -34,11 +34,12 @@ int ExecuteFromFile(string script) {
   code = Encoding::UTF8ToUTF32(content);
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
-  Parser().ParseProgram(code);
-  Context *context = new Context(NULL);
 
   noop::PoolInit(pool);
 
+  Parser().ParseProgram(code)->Execute();
+
+  /* For DEBUG
   context->var_table[U"undefined"] = 0;
 
   Context *body = new Context(context);
@@ -48,7 +49,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Look up undefined " << body->LookUp(U"undefined") << endl;
   DEBUG << "Look up true " << body->LookUp(U"true") << endl;
   DEBUG << "Look up false " << body->LookUp(U"false") << endl;
-
+  */
   return 0;
 }
 

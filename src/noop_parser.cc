@@ -5,12 +5,14 @@
 
 #include <noop_io.h>
 #include <noop_type.h>
+#include <noop_context.h>
 
 using namespace std;
 
 /* LL(1) parser for simplified JavaScript. */
 
 namespace noop {
+Context* current_context;
 
 /* I/O Helper */
 
@@ -781,5 +783,51 @@ Program* Parser::ParseProgram(String code) {
 }
 
 SyntaxTree delegate;
+
+bool VariableDeclarator::Execute() {
+  if (init == NULL) {
+    current_context->var_table[id->name] = pool.size();
+    Object *tmp_obj = new Object(ObjectType::UndefinedObject);
+    DEBUG << "undefined_obj: " << (tmp_obj->type) << endl;
+    pool.push_back(tmp_obj);
+    DEBUG << "Look up undefined " << current_context->LookUp(U"undefined") << endl;
+    DEBUG << "Look up " << id->name << " " << current_context->LookUp(id->name) << endl;
+  };
+  return true;
+}
+
+bool VariableStatement::Execute() {
+  for (auto declaration: declarations) {
+    if (!declaration->Execute()) {
+      cout << "ERROR" << endl;
+      exit(0);
+    }
+  }
+  return true;
+}
+
+bool ExpressionStatement::Execute() {
+  /* TODO */
+  return true;
+}
+
+bool Body::Execute() {
+  current_context = new Context(current_context);
+  for (auto statement: statements) {
+    if (!statement->Execute()) {
+      cout << "ERROR" << endl;
+      exit(0);
+    }
+  }
+  return true;
+}
+
+bool Program::Execute() {
+  current_context = global_context;
+  if (body != NULL) {
+    return body->Execute();
+  }
+}
+
 
 } // namespace noop
