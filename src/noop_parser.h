@@ -102,12 +102,14 @@ struct Identifier: Expression {
   Identifier() {
     type = SyntaxTreeNodeType::Identifier;
   }
+  bool Execute();
 };
 
 struct ThisExpression: Expression {
   ThisExpression() {
     type = SyntaxTreeNodeType::ThisExpression;
   }
+  bool Execute();
 };
 
 struct MemberExpression: Expression {
@@ -117,6 +119,7 @@ struct MemberExpression: Expression {
   MemberExpression() {
     type = SyntaxTreeNodeType::MemberExpression;
   }
+  bool Execute();
 };
 
 struct CallExpression: Expression {
@@ -125,6 +128,7 @@ struct CallExpression: Expression {
   CallExpression() {
     type = SyntaxTreeNodeType::CallExpression;
   }
+  bool Execute();
 };
 
 struct AssignmentExpression: Expression {
@@ -134,6 +138,7 @@ struct AssignmentExpression: Expression {
   AssignmentExpression() {
     type = SyntaxTreeNodeType::AssignmentExpression;
   }
+  bool Execute();
 };
 
 struct SequenceExpression: Expression {
@@ -141,6 +146,7 @@ struct SequenceExpression: Expression {
   SequenceExpression() {
     type = SyntaxTreeNodeType::SequenceExpression;
   }
+  bool Execute();
 };
 
 struct BinaryExpression: Expression {
@@ -150,6 +156,7 @@ struct BinaryExpression: Expression {
   BinaryExpression() {
     type = SyntaxTreeNodeType::BinaryExpression;
   }
+  bool Execute();
 };
 
 struct NumberLiteral: Literal {
@@ -157,6 +164,7 @@ struct NumberLiteral: Literal {
   NumberLiteral() {
     type = SyntaxTreeNodeType::NumberLiteral;
   }
+  bool Execute();
 };
 
 struct StringLiteral: Literal {
@@ -164,6 +172,7 @@ struct StringLiteral: Literal {
   StringLiteral() {
     type = SyntaxTreeNodeType::StringLiteral;
   }
+  bool Execute();
 };
 
 struct BooleanLiteral: Literal {
@@ -171,12 +180,14 @@ struct BooleanLiteral: Literal {
   BooleanLiteral() {
     type = SyntaxTreeNodeType::BooleanLiteral;
   }
+  bool Execute();
 };
 
 struct NullLiteral: Literal {
   NullLiteral() {
     type = SyntaxTreeNodeType::NullLiteral;
   }
+  bool Execute();
 };
 
 /* Just an interface */
@@ -190,7 +201,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   VariableDeclarator() {
     type = SyntaxTreeNodeType::VariableDeclarator;
   }
-  virtual bool Execute();
+  bool Execute();
 };
 
 struct VariableStatement: Statement {
@@ -199,7 +210,7 @@ struct VariableStatement: Statement {
   VariableStatement() {
     type = SyntaxTreeNodeType::VariableStatement;
   }
-  virtual bool Execute();
+  bool Execute();
 };
 
 struct ExpressionStatement: Statement {
@@ -207,7 +218,7 @@ struct ExpressionStatement: Statement {
   ExpressionStatement() {
     type = SyntaxTreeNodeType::ExpressionStatement;
   }
-  virtual bool Execute();
+  bool Execute();
 };
 
 struct Body: Statement {
@@ -215,7 +226,7 @@ struct Body: Statement {
   Body() {
     type = SyntaxTreeNodeType::Body;
   }
-  virtual bool Execute();
+  bool Execute();
 };
 
 struct Program: SyntaxTreeNode {
@@ -223,7 +234,7 @@ struct Program: SyntaxTreeNode {
   Program() {
     type = SyntaxTreeNodeType::Program;
   }
-  virtual bool Execute();
+  bool Execute();
 };
 
 /* SyntaxTreeResolver */

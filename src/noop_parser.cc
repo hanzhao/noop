@@ -824,7 +824,145 @@ bool Program::Execute() {
   if (body != NULL) {
     return body->Execute();
   }
+  return true;
+}
+/*
+struct Identifier: Expression {
+  String name;
+  Identifier() {
+    type = SyntaxTreeNodeType::Identifier;
+  }
+  bool Execute();
+};
+
+struct ThisExpression: Expression {
+  ThisExpression() {
+    type = SyntaxTreeNodeType::ThisExpression;
+  }
+  bool Execute();
+};
+
+struct MemberExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  MemberExpression() {
+    type = SyntaxTreeNodeType::MemberExpression;
+  }
+  bool Execute();
+};
+
+struct CallExpression: Expression {
+  Expression* callee;
+  std::vector<Expression*> arguments;
+  CallExpression() {
+    type = SyntaxTreeNodeType::CallExpression;
+  }
+  bool Execute();
+};
+
+struct AssignmentExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  AssignmentExpression() {
+    type = SyntaxTreeNodeType::AssignmentExpression;
+  }
+  bool Execute();
+};
+
+struct SequenceExpression: Expression {
+  std::vector<Expression *> expressions;
+  SequenceExpression() {
+    type = SyntaxTreeNodeType::SequenceExpression;
+  }
+  bool Execute();
+};
+
+struct BinaryExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  BinaryExpression() {
+    type = SyntaxTreeNodeType::BinaryExpression;
+  }
+  bool Execute();
+};
+*/
+bool Identifier::Execute() {
+  return true;
 }
 
+bool ThisExpression::Execute() {
+  return true;
+}
+
+bool MemberExpression::Execute() {
+  return true;
+}
+
+bool CallExpression::Execute() {
+  return true;
+}
+
+bool AssignmentExpression::Execute() {
+  return true;
+}
+
+bool SequenceExpression::Execute() {
+  return true;
+}
+
+bool BinaryExpression::Execute() {
+  return true;
+}
+/*
+struct NumberLiteral: Literal {
+  Number value;
+  NumberLiteral() {
+    type = SyntaxTreeNodeType::NumberLiteral;
+  }
+  bool Execute();
+};
+
+struct StringLiteral: Literal {
+  String value;
+  StringLiteral() {
+    type = SyntaxTreeNodeType::StringLiteral;
+  }
+  bool Execute();
+};
+
+struct BooleanLiteral: Literal {
+  bool value;
+  BooleanLiteral() {
+    type = SyntaxTreeNodeType::BooleanLiteral;
+  }
+  bool Execute();
+};
+
+struct NullLiteral: Literal {
+  NullLiteral() {
+    type = SyntaxTreeNodeType::NullLiteral;
+  }
+  bool Execute();
+};
+*/
+
+bool NumberLiteral::Execute() {
+  return true;
+}
+
+bool StringLiteral::Execute() {
+  return true;
+}
+
+bool BooleanLiteral::Execute() {
+  return true;
+}
+
+bool NullLiteral::Execute() {
+  return true;
+}
 
 } // namespace noop
