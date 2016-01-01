@@ -22,13 +22,6 @@ enum {
 struct Object {
   int type;
   Object(int type): type(type) {}
-  template <class T> bool is() {
-    return dynamic_cast<T*>(this) != NULL;
-  }
-  template <class T> T* as() {
-    T* t = dynamic_cast<T *>(this);
-    return t;
-  }
 };
 
 struct NullObject: Object {
