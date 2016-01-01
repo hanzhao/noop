@@ -93,7 +93,8 @@ bool IsKeyword(String s) {
     (s == U"return") ||
     (s == U"typeof") ||
     (s == U"break") ||
-    (s == U"continue");
+    (s == U"continue") ||
+    (s == U"arguments");
 }
 
 }

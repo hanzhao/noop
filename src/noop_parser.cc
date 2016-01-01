@@ -1,11 +1,20 @@
 #include <noop_parser.h>
 
+#include <stdexcpt>
+
+using namespace std;
+
 /* LL(1) parser for simplified JavaScript. */
 
 namespace noop {
 
 Token::Token(int type, int start, int end)
     : type(type), start(start), end(end) {
+}
+
+bool IsSamePunctuation(const String& value) {
+  return look_ahead->type == Token::Punctuator &&
+    ((IdentifierToken *)look_ahead)->value == value;
 }
 
 void SkipUselessness() {
@@ -36,6 +45,21 @@ void SkipUselessness() {
     } else {
       break;
     }
+  }
+}
+
+void GetKeyword(const String& keyword) {
+  Token* token = lex();
+  if (token->type != TokenType::Identifier ||
+      ((IdentifierToken *)token)->value != keyword) {
+    throw runtime_error("Expected word " + keyword + " is not matched.");
+  }
+}
+
+void GetSemicolon() {
+  if (source[index] == 59) {
+    lex();
+    return;
   }
 }
 
@@ -108,15 +132,23 @@ NumericLiteralToken* GetNumericLiteral() {
 
 IdentifierToken* GetIdentifier() {
   String str = U"";
-  int start = index, c;
+  int start = index, type, c;
   while (index < length) {
     c = source[index++];
     if (!CharType::IsIdentifier(c))
       break;
     str += c;
   }
-  IdentifierToken* token = new IdentifierToken(TokenType::Identifier,
-                                               start, index);
+  if (StringType::IsKeyword(str)) {
+    type = TokenType::Keyword;
+  } else if (str == U"null") {
+    type = TokenType::NullLiteral;
+  } else if (str == U"true" || str == U"false") {
+    type = TokenType::BooleanLiteral;
+  } else {
+    type = TokenType::Identifier;
+  }
+  IdentifierToken* token = new IdentifierToken(type, start, index);
   token->name = str;
   return token;
 }
@@ -210,6 +242,83 @@ Token* Lex() {
   index = token->start;
   return token;
 }
+
+VariableDeclarator* ParseVariableDeclarator(const String& kind) {
+  Identifier* id = ParseVariableIdentifier();
+  Expression* init = NULL;
+//  if (IsSamePunctuation("=")) {
+//    lex();
+//    init = ParseAssignmentExpression();
+//  }
+  return delegate.CreateVariableDeclarator(id, init);
+}
+
+vector<VariableDeclarator *> ParseVariableDeclarationList(const String& kind) {
+  vector<VariableDeclarator *> res;
+  do {
+    res.push_back(ParseVariableDeclarator(kind));
+    if (!IsSamePunctuation(",")) {
+      break;
+    }
+    lex()
+  } while (index < length);
+  return res;
+}
+
+VariableStatement* Parser::ParseVariableStatement() {
+  vector<VariableDeclarator *> declarations;
+  GetKeyword(U"var");
+  declarations = ParseVariableDeclarationList(U"var");
+  GetSemicolon();
+  return delegate.CreateVariableStatement(U"var", declarations);
+}
+
+Statement* Parser::ParseStatement() {
+  int type = look_ahead->type;
+  if (type == Token::EndOfSource)
+    return NULL;
+  if (type == Token::Keyword) {
+    String value = ((IdentifierToken *)look_ahead)->value;
+    if (value == U"var") {
+      return ParseVariableStatement();
+    }
+  }
+  if (type == Token::Punctuator) {
+    String value = ((PunctuatorToken *)look_ahead)->value;
+    // if (value == ";")
+    if (value == U"{") {
+      return ParseBody();
+    } else if (value == U"}") {
+      return NULL;
+    } // else if (value == U"(")
+  //    return ParseExpression();
+  }
+  expr = ParseExpression();
+  GetSemicolon();
+  return delegate.CreateExpressionStatement(expr);
+}
+
+/*
+ * Parse program body or block body
+ */
+Body* Parser::ParseBody() {
+  Statement* statement;
+  Body* body = new Body();
+  // block ?
+  if (look_ahead->type == TokenType::Punctuator &&
+      ((PunctuatorToken *)look_ahead)->value == U"{") {
+    lex();
+  }
+  while (index < length) {
+    if ((statement = ParseStatement()) != NULL) {
+      body->children.push_back(statement);
+    } else {
+      break;
+    }
+  }
+  return body;
+}
+
 /*
  * Parse an entire JavaScript source code
  */
