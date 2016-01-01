@@ -21,23 +21,16 @@ ALL_OBJS = $(SRC_PATH)/noop.o \
 					 $(SRC_PATH)/noop_type.o
 
 
-noop: noop.o noop_core.o noop_io.o noop_parser.o noop_switches.o noop_type.o
+noop: $(ALL_OBJS)
 	$(LINK) $(ALL_OBJS) -o noop
 
-noop.o: $(SRC_PATH)/noop.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+$(SRC_PATH)/%.o: $(SRC_PATH)/%.cc $(ALL_DEPS)
+	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $@
 
-noop_core.o: $(SRC_PATH)/noop_core.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+clean_o:
+	rm -f $(SRC_PATH)/*.o
 
-noop_io.o: $(SRC_PATH)/noop_io.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+clean_noop:
+	rm -f noop
 
-noop_switches.o: $(SRC_PATH)/noop_switches.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
-
-noop_parser.o: $(SRC_PATH)/noop_parser.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
-
-noop_type.o: $(SRC_PATH)/noop_type.cc $(ALL_DEPS)
-	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $(SRC_PATH)/$@
+clean: clean_o clean_noop
