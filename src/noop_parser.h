@@ -203,15 +203,11 @@ struct VariableStatement: Statement {
 };
 
 struct ExpressionStatement: Statement {
-<<<<<<< 631529c222996333910f82a35f373521fc9116f8
   Expression* expression;
   ExpressionStatement() {
     type = SyntaxTreeNodeType::ExpressionStatement;
   }
-=======
   virtual bool Execute();
-  /* TODO */
->>>>>>> finish declaration
 };
 
 struct Body: Statement {
