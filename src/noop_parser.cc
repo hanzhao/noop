@@ -1,100 +1,225 @@
 #include <noop_parser.h>
 
-#include <noop.h>
-#include <noop_io.h>
-#include <noop_type.h>
-
-#include <string>
-#include <iostream>
-
-using namespace std;
-
+/* LL(1) parser for simplified JavaScript. */
 
 namespace noop {
-namespace Parser {
 
-  vector<TokenType> Token;
-  int current_token;
-  std::vector<Statement*> body;
+Token::Token(int type, int start, int end)
+    : type(type), start(start), end(end) {
+}
 
-  void InitData(String& data) {
-    code_data = data;
-    if (Token.size() == 0) {
-      InitToken();
+void SkipUselessness() {
+  Char c;
+  bool blocking, lining;
+  while (index < length) {
+    c = source[index];
+    if (lining) {
+      index += 1;
+      if (c == '\n') {
+        lining = false;
+      }
+    } else if (blocking) {
+      index += 1
+      if (c == '*' && source[index + 1] == '/') {
+        index += 1;
+        blocking = false;
+      }
+    } else if (c == '/') {
+      c = source[index++];
+      if (c == '/') {
+        lining = true;
+      } else if (c == '*') {
+        blocking = true;
+      }
+    } else if (CharType::IsSpace(c)) {
+      index += 1;
+    } else {
+      break;
     }
   }
+}
 
-  int GetToken() {
-    static int last_char_pos = 0;
-    ParseSpace(code_data, last_char_pos);
-    if (isalpha(code_data[last_char_pos])) {
-      identifier_str = code_data[last_char_pos];
-      while (isalnum((code_data[++last_char_pos]))) {
-        identifier_str += code_data[last_char_pos];
-      }
-      if (identifier_str == noop::Token[TOKEN::VAR_DECLARATION].name) {
-        // DEBUG << "identifier_str:" << identifier_str << endl;
-        return TOKEN::VAR_DECLARATION;
-      }
-      temp_data = new StringNode(identifier_str);
-      return TOKEN::STRING;
+/*
+ * Token Getter
+ */
+StringLiteralToken* GetStringLiteral() {
+  int quote = source[index];
+  int start = index++;
+  String str;
+  while (index < length) {
+    int c = source[index++];
+    /* End of literal */
+    if (c == quote) {
+      quote = 0;
+      break;
     }
-
-    if (code_data[last_char_pos] == '\"') {
-      identifier_str = U"";
-      int ahead_pos = last_char_pos;
-      while (!(code_data[++last_char_pos] == '\"' &&
-             code_data[ahead_pos] != '\\'))  {
-        identifier_str += code_data[++ahead_pos];
-      }
-      ++last_char_pos;
-      temp_data = new StringNode(identifier_str);
-      return TOKEN::STRING;
-    }
-
-    if (code_data[last_char_pos] == '=') {
-      ++last_char_pos;
-      return TOKEN::ASSIGN;
-    }
-
-    if (code_data[last_char_pos] == ';') {
-      ++last_char_pos;
-      return TOKEN::SEMICOLON;
-    }
-
-    return TOKEN::BLANK;
-  }
-
-  int GetNextToken() {
-    return current_token = GetToken();
-  };
-
-  void ParseSpace(String& data, int& current_pos) {
-    while (isspace(data[current_pos])) {
-      ++current_pos;
-    }
-  }
-
-  VarDeclarationStatement* ParserVar() {
-    VarDeclarationStatement* temp = new VarDeclarationStatement();
-    int this_token;
-    while (true) {
-      this_token = GetToken();
-      if (this_token == TOKEN::ASSIGN) {
-        String this_name = identifier_str;
-        GetToken();
-        Expression* atom = new AtomExpr(temp_data);
-        temp->vars.push_back(make_pair(this_name, atom));
-      } else if (this_token == TOKEN::SEMICOLON) {
+    /* \ */
+    else if (ch == '\\') {
+      ch = source[index++];
+      switch (ch) {
+      case 'b':
+        str += U'\b';
         break;
+      case 'f':
+        str += U'\f';
+        break;
+      case 'n':
+        str += U'\n';
+        break;
+      case 't':
+        str += U'\t';
+        break;
+      case 'v':
+        str += U'\v';
+        break;
+      case 'r':
+        str += U'\r';
+        break;
+      default:
+        assert(false);
       }
     }
-    return temp;
+    /* normal */
+    else {
+      str += c;
+    }
+  }
+  assert(quote == 0);
+  StringLiteralToken* token = new StringLiteralToken(TokenType::StringLiteral,
+                                                     start, index);
+  token->value = str;
+  return token;
+}
+
+NumericLiteralToken* GetNumericLiteral() {
+  String str = U"";
+  int start = index, c;
+  while (index < length) {
+    c = source[index++];
+    if (!CharType::IsDigit(c))
+      break;
+    str += c;
+  }
+  NumericLiteralToken* token = new NumericLiteralToken(TokenType::NumberLiteral,
+                                                       start, index);
+  streamstring(Encoding::UTF32ToUTF8(str)) >> token->value;
+  return token;
+}
+
+IdentifierToken* GetIdentifier() {
+  String str = U"";
+  int start = index, c;
+  while (index < length) {
+    c = source[index++];
+    if (!CharType::IsIdentifier(c))
+      break;
+    str += c;
+  }
+  IdentifierToken* token = new IdentifierToken(TokenType::Identifier,
+                                               start, index);
+  token->name = str;
+  return token;
+}
+
+PunctuatorToken* GetPunctuator() {
+  /* 1x-terminal */
+  int start = index;
+  Char c = source[index];
+  if (c == '.' || c == '(' || c == ')' || c == ';' || c == ',' || c == ':' ||
+      c == '[' || c == ']' || c == '{' || c == '}' || c == '?' || c == '~') {
+    index += 1;
+    PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
+                                                 start, index);
+    token->value = token->value + c;
+    return token;
+  }
+  /* 3x: ===, !== */
+  Char c2 = source[index + 1];
+  Char c3 = source[index + 2];
+  if (c2 == '=' && c3 == '=' && (c1 == '!' || c1 == '=')) {
+    index += 3;
+    PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
+                                                 start, index);
+    token->value = token->value + c + c2 + c3;
+    return token;
+  }
+  /* 2x: ==, &&, ||, >=, <= */
+  if (c == c2 && (c == '=' || c == '&' || c == '|')) {
+    index += 2;
+    PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
+                                                 start, index);
+    token->value = token->value + c + c2;
+    return token;
+  }
+  if (c2 == '=' && (c == '>' || c == '<')) {
+    index += 2;
+    PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
+                                                 start, index);
+    token->value = token->value + c + c2;
+    return token;
+  }
+  /* 1x */
+  if (c == '+' || c == '-' || c == '*' || c == '/' || c == '%' ||
+      c == '>' || c == '<' || c == '=') {
+    index += 1;
+    PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
+                                                 start, index);
+    token->value = token->value + c;
+    return token;
   }
 
-  void HandleVarDeclaration() {
-    body.push_back(ParserVar());
-    GetNextToken();
+}
+
+/*
+ * Look Ahead for LL(1)
+ */
+Token* Parser::LookAhead() {
+  SkipUselessness();
+  /* This is end of source code */
+  if (index >= length) {
+    return new Token(TokenType::EndOfSource, index, index);
   }
-} // namespace Parser
+  Char c = source[index];
+  /* String literal */
+  if (c == '\'' || c == '"') {
+    return GetStringLiteral();
+  }
+  if (Char::IsDigit(c)) {
+    return GetNumericLiteral();
+  }
+  if (Char::IsIdentifier(c)) {
+    return GetIdentifier();
+  }
+  return GetPunctuator();
+}
+/*
+ * Peek next token for LookAhead
+ */
+void Parser::Peek() {
+  int current_index = index;
+  look_ahead = LookAhead();
+  index = current_index;
+}
+/*
+ * Get this token
+ */
+Token* Lex() {
+  Token* token = look_ahead;
+  index = token->start;
+  look_ahead = LookAhead();
+  index = token->start;
+  return token;
+}
+/*
+ * Parse an entire JavaScript source code
+ */
+Program* Parser::ParseProgram(String code) {
+  source = code;
+  index = 0;
+  length = code.length();
+  look_ahead = NULL;
+  Peek();
+  return ParseBody();
+}
+
 } // namespace noop

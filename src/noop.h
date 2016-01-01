@@ -1,5 +1,6 @@
 #ifndef NOOP_H
 #define NOOP_H
+#include <cassert>
 #include <codecvt>
 #include <iostream>
 #include <locale>
@@ -12,6 +13,7 @@ extern int debug;
 
 typedef std::u32string String;
 typedef char32_t Char;
+typedef double Number;
 
 } // namespace noop
 

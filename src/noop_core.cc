@@ -6,7 +6,6 @@
 #include <noop.h>
 #include <noop_io.h>
 #include <noop_parser.h>
-#include <noop_type.h>
 
 using namespace std;
 
@@ -30,25 +29,10 @@ int ExecuteFromFile(string script) {
     content += buff;
   }
   /* Convert code from UTF-8 to UTF-32 */
-  code = noop::Encoding::UTF8ToUTF32(content);
-  noop::Parser::InitData(code);
-  noop::Parser::GetNextToken();
-  while (true) {
-    switch (Parser::current_token) {
-      case TOKEN::VAR_DECLARATION:
-        noop::Parser::HandleVarDeclaration();
-        break;
-      default:
-        for (unsigned long i = 0; i < Parser::body.size(); ++i) {
-          DEBUG << "Body: " << i << endl;
-          Parser::body[i]->Print();
-        }
-        return 0;
-    }
-  }
+  code = Encoding::UTF8ToUTF32(content);
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
-  // noop::Parser::ParseBody(code);
+  Parser().ParseProgram(code);
   return 0;
 }
 
