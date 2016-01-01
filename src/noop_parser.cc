@@ -27,22 +27,25 @@ ostream& operator <<(ostream& _out, Token* token) {
   */
   switch (token->type) {
   case TokenType::EndOfSource:
-    _out << "EndOfSource { type: _ }";
+    _out << "EndOfSource { }";
     break;
   case TokenType::Keyword:
-    _out << "Keyword { type: _, name: " <<
+    _out << "Keyword { name: " <<
     ((IdentifierToken *)token)->name << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
   case TokenType::Identifier:
-    _out << "Identifier { type: _, name: " <<
+    _out << "Identifier { name: " <<
     ((IdentifierToken *)token)->name << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
   case TokenType::Punctuator:
-    _out << "Punctuator { type: _, name: " <<
+    _out << "Punctuator { value: " <<
     ((PunctuatorToken *)token)->value << ", start: " << token->start
     << ", end: " << token->end << " }";
+    break;
+  default:
+    _out << "~Token { }";
     break;
   }
   return _out;
@@ -62,32 +65,94 @@ ostream& operator <<(ostream& _out, vector<T> v) {
 
 ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
   /*
-    VariableDeclaratorNode,
-    VariableStatementNode,
-    BodyNode,
-    ProgramNode
+    enum {
+      NullLiteral,
+      BooleanLiteral,
+      StringLiteral,
+      NumberLiteral,
+      Identifier,
+      ThisExpression,
+      MemberExpression,
+      CallExpression,
+      AssignmentExpression,
+      SequenceExpression,
+      BinaryExpression,
+      VariableDeclarator,
+      VariableStatement,
+      ExpressionStatement,
+      Body,
+      Program
+    };
   */
   if (node == NULL) {
     _out << "NULL";
     return _out;
   }
   switch (node->type) {
-  case SyntaxTreeNodeType::VariableDeclaratorNode:
-    _out << "VariableDeclaratorNode { type: _, id: " <<
+  case SyntaxTreeNodeType::NullLiteral:
+    _out << "NullLiteralNode { }";
+    break;
+  case SyntaxTreeNodeType::BooleanLiteral:
+    _out << "BooleanLiteralNode { value: " << ((BooleanLiteral*)node)->value <<
+    " }";
+    break;
+  case SyntaxTreeNodeType::StringLiteral:
+    _out << "StringLiteralNode { value: " << ((StringLiteral*)node)->value <<
+    " }";
+    break;
+  case SyntaxTreeNodeType::NumberLiteral:
+    _out << "NumberLiteralNode { value: " << ((NumberLiteral*)node)->value <<
+    " }";
+    break;
+  case SyntaxTreeNodeType::Identifier:
+    _out << "IdentifierNode { name: " << ((Identifier*)node)->name <<
+    " }";
+    break;
+  case SyntaxTreeNodeType::ThisExpression:
+    _out << "ThisExpressionNode { }";
+    break;
+  case SyntaxTreeNodeType::MemberExpression:
+    _out << "MemberExpressionNode { left: " << ((MemberExpression*)node)->left <<
+    ", _operator: " << ((MemberExpression*)node)->_operator << ", right: " <<
+    ((MemberExpression*)node)->right << " }";
+    break;
+  case SyntaxTreeNodeType::CallExpression:
+    _out << "CallExpressionNode { callee: " << ((CallExpression*)node)->callee <<
+    ", arguments: " << ((CallExpression*)node)->arguments << "} ";
+    break;
+  case SyntaxTreeNodeType::AssignmentExpression:
+    _out << "AssignmentExpressionNode { left: " << ((AssignmentExpression*)node)->left <<
+    ", _operator: " << ((AssignmentExpression*)node)->_operator << ", right: " <<
+    ((AssignmentExpression*)node)->right << " }";
+    break;
+  case SyntaxTreeNodeType::BinaryExpression:
+    _out << "BinaryExpressionNode { left: " << ((BinaryExpression*)node)->left <<
+    ", _operator: " << ((BinaryExpression*)node)->_operator << ", right: " <<
+    ((BinaryExpression*)node)->right << " }";
+    break;
+  case SyntaxTreeNodeType::VariableDeclarator:
+    _out << "VariableDeclaratorNode { id: " <<
     ((VariableDeclarator*)node)->id << ", init: " << ((VariableDeclarator*)node)->init <<
     " }";
     break;
-  case SyntaxTreeNodeType::VariableStatementNode:
-    _out << "VariableStatementNode { type: _, declarations: " <<
+  case SyntaxTreeNodeType::VariableStatement:
+    _out << "VariableStatementNode { declarations: " <<
     ((VariableStatement*)node)->declarations << " }";
     break;
-  case SyntaxTreeNodeType::BodyNode:
-    _out << "BodyNode { type: _, statements: " <<
+  case SyntaxTreeNodeType::ExpressionStatement:
+    _out << "ExpressionStatement { expression: " <<
+    ((ExpressionStatement*)node)->expression << " }";
+    break;
+  case SyntaxTreeNodeType::Body:
+    _out << "BodyNode { statements: " <<
     ((Body*)node)->statements << " }";
     break;
-  case SyntaxTreeNodeType::ProgramNode:
-    _out << "ProgramNode { type: _, body: " <<
+  case SyntaxTreeNodeType::Program:
+    _out << "ProgramNode { body: " <<
     ((Program*)node)->body << " }";
+    break;
+  default:
+    _out << "~Node { }";
     break;
   }
   return _out;
@@ -110,8 +175,50 @@ VariableStatement* SyntaxTree::CreateVariableStatement(String kind,
   return node;
 }
 
+AssignmentExpression* SyntaxTree::CreateAssignmentExpression(String op,
+                                    Expression* left, Expression* right) {
+  AssignmentExpression* node = new AssignmentExpression();
+  node->_operator = op;
+  node->left = left;
+  node->right = right;
+  return node;
+}
+
+SequenceExpression* SyntaxTree::CreateSequenceExpression(vector<Expression*> expressions) {
+  SequenceExpression* node = new SequenceExpression();
+  node->expressions = expressions;
+  return node;
+}
+
 ExpressionStatement* SyntaxTree::CreateExpressionStatement(Expression* expr) {
-  /* TODO */
+  ExpressionStatement* node = new ExpressionStatement();
+  node->expression = expr;
+  return node;
+}
+
+MemberExpression* SyntaxTree::CreateMemberExpression(String op, Expression* expr,
+                                                     Expression* property) {
+  MemberExpression* node = new MemberExpression();
+  node->_operator = op;
+  node->left = expr;
+  node->right = property;
+  return node;
+}
+
+CallExpression* SyntaxTree::CreateCallExpression(Expression* expr, vector<Expression*> args) {
+  CallExpression* node = new CallExpression();
+  node->callee = expr;
+  node->arguments = args;
+  return node;
+}
+
+BinaryExpression* SyntaxTree::CreateBinaryExpression(String op,
+                                          Expression* left, Expression* right) {
+  BinaryExpression* node = new BinaryExpression();
+  node->_operator = op;
+  node->left = left;
+  node->right = right;
+  return node;
 }
 
 Program* SyntaxTree::CreateProgram(Body* body) {
@@ -120,9 +227,53 @@ Program* SyntaxTree::CreateProgram(Body* body) {
   return node;
 }
 
-bool Parser::IsSamePunctuation(const String& value) {
+Literal* SyntaxTree::CreateLiteral(Token* token) {
+  if (token->type == TokenType::NumberLiteral) {
+    NumberLiteral* node = new NumberLiteral();
+    node->value = ((NumericLiteralToken*)token)->value;
+    return node;
+  } else if (token->type == TokenType::NullLiteral) {
+    NullLiteral* node = new NullLiteral();
+    return node;
+  } else if (token->type == TokenType::StringLiteral) {
+    StringLiteral* node = new StringLiteral();
+    node->value = ((StringLiteralToken*)token)->value;
+    return node;
+  } else if (token->type == TokenType::BooleanLiteral) {
+    BooleanLiteral* node = new BooleanLiteral();
+    node->value = ((IdentifierToken*)token)->name == U"true";
+    return node;
+  } else {
+    assert(false);
+  }
+}
+
+Identifier* SyntaxTree::CreateIdentifier(Token* token) {
+  Identifier* node = new Identifier();
+  node->name = ((IdentifierToken *)token)->name;
+  return node;
+}
+
+ThisExpression* SyntaxTree::CreateThisExpression() {
+  ThisExpression* node = new ThisExpression();
+  return node;
+}
+
+bool Parser::IsPunctuation(const String& value) {
   return look_ahead->type == TokenType::Punctuator &&
     ((PunctuatorToken *)look_ahead)->value == value;
+}
+
+bool Parser::IsKeyword(const String& value) {
+  return look_ahead->type == TokenType::Keyword &&
+    ((IdentifierToken *)look_ahead)->name == value;
+}
+
+bool Parser::IsIdentifierName(Token* token) {
+  return token->type == TokenType::Identifier ||
+         token->type == TokenType::Keyword ||
+         token->type == TokenType::BooleanLiteral ||
+         token->type == TokenType::NullLiteral;
 }
 
 void Parser::SkipUselessness() {
@@ -309,7 +460,7 @@ PunctuatorToken* Parser::GetPunctuator() {
     token->value = token->value + c;
     return token;
   }
-
+  throw runtime_error("Unknown token");
 }
 
 /*
@@ -361,14 +512,14 @@ VariableDeclarator* Parser::ParseVariableDeclarator() {
   IdentifierToken* id = (IdentifierToken*)Lex();
   DEBUG << "Parsed var declarator: " << id << ", look ahead" << look_ahead << endl;
   Expression* init = NULL;
-//  if (IsSamePunctuation("=")) {
-//    lex();
-//    init = ParseAssignmentExpression();
-//  }
+  if (IsPunctuation(U"=")) {
+    Lex();
+    init = ParseAssignmentExpression();
+  }
   return delegate.CreateVariableDeclarator(id, init);
 }
 
-vector<VariableDeclarator *> Parser::ParseVariableDeclarationList(const String& kind) {
+vector<VariableDeclarator *> Parser::ParseVariableDeclarationList() {
   vector<VariableDeclarator *> res;
   do {
     if (look_ahead->type != TokenType::Identifier) {
@@ -376,7 +527,7 @@ vector<VariableDeclarator *> Parser::ParseVariableDeclarationList(const String& 
     }
     res.push_back(ParseVariableDeclarator());
     DEBUG << "A var declarator pushed back, look_head " << look_ahead << endl;
-    if (!IsSamePunctuation(U",")) {
+    if (!IsPunctuation(U",")) {
       break;
     }
     Lex();
@@ -388,9 +539,183 @@ vector<VariableDeclarator *> Parser::ParseVariableDeclarationList(const String& 
 VariableStatement* Parser::ParseVariableStatement() {
   vector<VariableDeclarator *> declarations;
   GetKeyword(U"var");
-  declarations = ParseVariableDeclarationList(U"var");
+  declarations = ParseVariableDeclarationList();
   GetSemicolon();
   return delegate.CreateVariableStatement(U"var", declarations);
+}
+
+Expression* Parser::ParsePrimaryExpression() {
+  int type = look_ahead->type;
+  if (type == TokenType::Identifier) {
+    return delegate.CreateIdentifier(Lex());
+  }
+  if (type == TokenType::StringLiteral || type == TokenType::NumberLiteral ||
+      type == TokenType::BooleanLiteral || type == TokenType::NullLiteral) {
+    return delegate.CreateLiteral(Lex());
+  }
+  if (type == TokenType::Keyword) {
+    if (IsKeyword(U"this")) {
+      Lex();
+      return delegate.CreateThisExpression();
+    } else if (IsKeyword(U"function")) {
+      /* TODO */
+      // return ParseFunctionExpression();
+    }
+  }
+  throw runtime_error("Parse primary expression: unknown token.");
+}
+
+Identifier* Parser::ParseLiteralProperty() {
+  Token* token = Lex();
+  if (!IsIdentifierName(token)) {
+    throw runtime_error("Unexcepted token.");
+  }
+  return delegate.CreateIdentifier(token);
+}
+
+Expression* Parser::ParseComputedProperty() {
+  return ParseExpression();
+}
+
+vector<Expression*> Parser::ParseArguments() {
+  vector<Expression*> args;
+  Token* token;
+  while (index < length && !IsPunctuation(U")")) {
+    args.push_back(ParseAssignmentExpression());
+    token = Lex(); // , or )
+    if (((PunctuatorToken*)token)->value == U")")
+      break;
+    assert(token->type == TokenType::Punctuator &&
+           ((PunctuatorToken*)token)->value == U",");
+  }
+  return args;
+}
+
+Expression* Parser::ParsePostfixExpression() {
+  SkipUselessness();
+  Token* token;
+  Expression* expr = ParsePrimaryExpression();
+  while (IsPunctuation(U".") || IsPunctuation(U"[") ||
+         IsPunctuation(U"(")) {
+    /* property */
+    if (IsPunctuation(U".")) {
+      Lex(); // .
+      Expression* property = ParseLiteralProperty();
+      expr = delegate.CreateMemberExpression(U".", expr, property);
+    } else if (IsPunctuation(U"[")) {
+      Lex(); // [
+      Expression* property = ParseComputedProperty();
+      expr = delegate.CreateMemberExpression(U"[", expr, property);
+      token = Lex(); // ]
+      assert(token->type == TokenType::Punctuator &&
+             ((PunctuatorToken*)token)->value == U"]");
+    } else if (IsPunctuation(U"(")) {
+      Lex(); // (
+      vector<Expression*> args = ParseArguments();
+      expr = delegate.CreateCallExpression(expr, args);
+    }
+  }
+  return expr;
+}
+
+int GetPrecedence(Token* token) {
+  int ret = 0;
+  if (token->type != TokenType::Punctuator) {
+    return 0;
+  }
+  String value = ((PunctuatorToken*)token)->value;
+  if (value == U"||") {
+    ret = 1;
+  } else if (value == U"&&") {
+    ret = 2;
+  } else if (value == U"==" || value == U"!=" || value == U"===" || value == U"!==") {
+    ret = 3;
+  } else if (value == U"<" || value == U">" || value == U"<=" || value == U">=") {
+    ret = 4;
+  } else if (value == U"<<" || value == U">>") {
+    ret = 5;
+  } else if (value == U"+" || value == U"-") {
+    ret = 6;
+  } else if (value == U"*" || value == U"/" || value == U"%") {
+    ret = 7;
+  }
+  return ret;
+}
+
+/* https://github.com/jquery/esprima/blob/master/src/parser.ts#L1372 */
+Expression* Parser::ParseBinaryExpression() {
+  Expression* expr = ParsePostfixExpression();
+  Token* token = look_ahead;
+  int precedence = GetPrecedence(token);
+  if (precedence == 0) {
+    return expr;
+  }
+  Lex();
+  Expression* left;
+  Expression* right;
+  String _operator;
+  vector<int> precedence_stack;
+  vector<Token*> operator_stack;
+  vector<Expression*> expression_stack;
+  expression_stack.push_back(expr);
+  precedence_stack.push_back(precedence);
+  operator_stack.push_back(token);
+  expression_stack.push_back(ParsePostfixExpression());
+  while ((precedence = GetPrecedence(look_ahead)) > 0) {
+    while ((expression_stack.size() > 1) &&
+           (precedence <= precedence_stack[precedence_stack.size() - 1])) {
+      right = expression_stack[expression_stack.size() - 1];
+      expression_stack.pop_back();
+      _operator = ((PunctuatorToken *)operator_stack[operator_stack.size() - 1])->value;
+      operator_stack.pop_back();
+      precedence_stack.pop_back();
+      left = expression_stack[expression_stack.size() - 1];
+      expression_stack.pop_back();
+      expression_stack.push_back(delegate.CreateBinaryExpression(_operator, left, right));
+    }
+    token = Lex();
+    precedence_stack.push_back(precedence);
+    operator_stack.push_back(token);
+    expression_stack.push_back(ParsePostfixExpression());
+  }
+  int i = expression_stack.size() - 1;
+  expr = expression_stack[i];
+  for (; i > 0; --i) {
+    expr = delegate.CreateBinaryExpression(((PunctuatorToken*)operator_stack[i - 1])->value,
+                                           expression_stack[i - 1], expr);
+  }
+  return expr;
+}
+
+Expression* Parser::ParseAssignmentExpression() {
+  Expression* left;
+  Expression* right;
+  Token* token = look_ahead;
+  left = ParseBinaryExpression();
+  if (IsPunctuation(U"=")) {
+    token = Lex();
+    right = ParseAssignmentExpression();
+    return delegate.CreateAssignmentExpression(((PunctuatorToken *)token)->value,
+                                               left, right);
+  }
+  return left;
+}
+
+Expression* Parser::ParseExpression() {
+  Expression* expr =  ParseAssignmentExpression();
+  if (IsPunctuation(U",")) {
+    vector<Expression*> expressions;
+    expressions.push_back(expr);
+    while (index < length) {
+      if (!IsPunctuation(U",")) {
+        break;
+      }
+      Lex();
+      expressions.push_back(ParseAssignmentExpression());
+    }
+    return delegate.CreateSequenceExpression(expressions);
+  }
+  return expr;
 }
 
 Statement* Parser::ParseStatement() {
@@ -413,9 +738,9 @@ Statement* Parser::ParseStatement() {
     } // else if (value == U"(")
   //    return ParseExpression();
   }
-  // expr = ParseExpression();
-  // GetSemicolon();
-  // return delegate.CreateExpressionStatement(expr);
+  Expression* expr = ParseExpression();
+  GetSemicolon();
+  return delegate.CreateExpressionStatement(expr);
 }
 
 /*

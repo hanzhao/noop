@@ -60,10 +60,22 @@ struct NumericLiteralToken: Token {
 namespace SyntaxTreeNodeType {
 
 enum {
-  VariableDeclaratorNode,
-  VariableStatementNode,
-  BodyNode,
-  ProgramNode
+  NullLiteral,
+  BooleanLiteral,
+  StringLiteral,
+  NumberLiteral,
+  Identifier,
+  ThisExpression,
+  MemberExpression,
+  CallExpression,
+  AssignmentExpression,
+  SequenceExpression,
+  BinaryExpression,
+  VariableDeclarator,
+  VariableStatement,
+  ExpressionStatement,
+  Body,
+  Program
 };
 
 } // namespace SyntaxTreeNodeType
@@ -79,6 +91,92 @@ struct Expression: SyntaxTreeNode {
   /* TODO */
 };
 
+struct Literal: Expression {
+  /* Just an interface */
+};
+
+struct Identifier: Expression {
+  String name;
+  Identifier() {
+    type = SyntaxTreeNodeType::Identifier;
+  }
+};
+
+struct ThisExpression: Expression {
+  ThisExpression() {
+    type = SyntaxTreeNodeType::ThisExpression;
+  }
+};
+
+struct MemberExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  MemberExpression() {
+    type = SyntaxTreeNodeType::MemberExpression;
+  }
+};
+
+struct CallExpression: Expression {
+  Expression* callee;
+  std::vector<Expression*> arguments;
+  CallExpression() {
+    type = SyntaxTreeNodeType::CallExpression;
+  }
+};
+
+struct AssignmentExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  AssignmentExpression() {
+    type = SyntaxTreeNodeType::AssignmentExpression;
+  }
+};
+
+struct SequenceExpression: Expression {
+  std::vector<Expression *> expressions;
+  SequenceExpression() {
+    type = SyntaxTreeNodeType::SequenceExpression;
+  }
+};
+
+struct BinaryExpression: Expression {
+  String _operator;
+  Expression* left;
+  Expression* right;
+  BinaryExpression() {
+    type = SyntaxTreeNodeType::BinaryExpression;
+  }
+};
+
+struct NumberLiteral: Literal {
+  Number value;
+  NumberLiteral() {
+    type = SyntaxTreeNodeType::NumberLiteral;
+  }
+};
+
+struct StringLiteral: Literal {
+  String value;
+  StringLiteral() {
+    type = SyntaxTreeNodeType::StringLiteral;
+  }
+};
+
+struct BooleanLiteral: Literal {
+  bool value;
+  BooleanLiteral() {
+    type = SyntaxTreeNodeType::BooleanLiteral;
+  }
+};
+
+struct NullLiteral: Literal {
+  NullLiteral() {
+    type = SyntaxTreeNodeType::NullLiteral;
+  }
+};
+
 /* Just an interface */
 struct Statement: SyntaxTreeNode {
 
@@ -88,7 +186,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   IdentifierToken* id;
   Expression* init;
   VariableDeclarator() {
-    type = SyntaxTreeNodeType::VariableDeclaratorNode;
+    type = SyntaxTreeNodeType::VariableDeclarator;
   }
 };
 
@@ -96,31 +194,42 @@ struct VariableStatement: Statement {
   std::vector<VariableDeclarator*> declarations;
   String kind;
   VariableStatement() {
-    type = SyntaxTreeNodeType::VariableStatementNode;
+    type = SyntaxTreeNodeType::VariableStatement;
   }
 };
 
 struct ExpressionStatement: Statement {
-  /* TODO */
+  Expression* expression;
+  ExpressionStatement() {
+    type = SyntaxTreeNodeType::ExpressionStatement;
+  }
 };
 
 struct Body: Statement {
   std::vector<Statement*> statements;
   Body() {
-    type = SyntaxTreeNodeType::BodyNode;
+    type = SyntaxTreeNodeType::Body;
   }
 };
 
 struct Program: SyntaxTreeNode {
   Body* body;
   Program() {
-    type = SyntaxTreeNodeType::ProgramNode;
+    type = SyntaxTreeNodeType::Program;
   }
 };
 
 /* SyntaxTreeResolver */
 class SyntaxTree {
 public:
+  Literal* CreateLiteral(Token* token);
+  Identifier* CreateIdentifier(Token* token);
+  ThisExpression* CreateThisExpression();
+  MemberExpression* CreateMemberExpression(String op, Expression* expr, Expression* property);
+  CallExpression* CreateCallExpression(Expression* expr, std::vector<Expression*> args);
+  AssignmentExpression* CreateAssignmentExpression(String op, Expression* left, Expression* right);
+  SequenceExpression* CreateSequenceExpression(std::vector<Expression*> expressions);
+  BinaryExpression* CreateBinaryExpression(String op, Expression* left, Expression* right);
   VariableDeclarator* CreateVariableDeclarator(IdentifierToken* id,
                                                Expression* init);
   VariableStatement* CreateVariableStatement(String kind,
@@ -139,7 +248,9 @@ public:
   Token* LookAhead();
   void Peek();
   Token* Lex();
-  bool IsSamePunctuation(const String& value);
+  bool IsPunctuation(const String& value);
+  bool IsKeyword(const String& value);
+  bool IsIdentifierName(Token* token);
   void SkipUselessness();
   void GetKeyword(const String& keyword);
   void GetSemicolon();
@@ -148,7 +259,15 @@ public:
   IdentifierToken* GetIdentifier();
   PunctuatorToken* GetPunctuator();
   VariableDeclarator* ParseVariableDeclarator();
-  std::vector<VariableDeclarator*> ParseVariableDeclarationList(const String& kind);
+  Expression* ParsePrimaryExpression();
+  Identifier* ParseLiteralProperty();
+  Expression* ParseComputedProperty();
+  std::vector<Expression*> ParseArguments();
+  Expression* ParsePostfixExpression();
+  Expression* ParseBinaryExpression();
+  Expression* ParseAssignmentExpression();
+  Expression* ParseExpression();
+  std::vector<VariableDeclarator*> ParseVariableDeclarationList();
   VariableStatement* ParseVariableStatement();
   Statement* ParseStatement();
   Body* ParseBody();
