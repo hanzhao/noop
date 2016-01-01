@@ -6,6 +6,7 @@
 #include <noop.h>
 #include <noop_io.h>
 #include <noop_parser.h>
+#include <noop_pool.h>
 
 using namespace std;
 
@@ -33,6 +34,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
   Parser().ParseProgram(code);
+  noop::PoolInit(pool);
   return 0;
 }
 
