@@ -27,22 +27,67 @@ ostream& operator <<(ostream& _out, Token* token) {
   */
   switch (token->type) {
   case TokenType::EndOfSource:
-    _out << "Token { type: TokenType::EndOfSource }";
+    _out << "EndOfSource { type: _ }";
     break;
   case TokenType::Keyword:
-    _out << "Token { type: TokenType::Keyword, name: " <<
+    _out << "Keyword { type: _, name: " <<
     ((IdentifierToken *)token)->name << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
   case TokenType::Identifier:
-    _out << "Token { type: TokenType::Identifier, name: " <<
+    _out << "Identifier { type: _, name: " <<
     ((IdentifierToken *)token)->name << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
   case TokenType::Punctuator:
-    _out << "Token { type: TokenType::Punctuator, name: " <<
+    _out << "Punctuator { type: _, name: " <<
     ((PunctuatorToken *)token)->value << ", start: " << token->start
     << ", end: " << token->end << " }";
+    break;
+  }
+  return _out;
+}
+
+template<class T>
+ostream& operator <<(ostream& _out, vector<T> v) {
+  _out << "[ ";
+  for (size_t i = 0; i < v.size(); ++i) {
+    _out << v[i];
+    if (i != v.size() - 1)
+      _out << ", ";
+  }
+  _out << " ]";
+  return _out;
+}
+
+ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
+  /*
+    VariableDeclaratorNode,
+    VariableStatementNode,
+    BodyNode,
+    ProgramNode
+  */
+  if (node == NULL) {
+    _out << "NULL";
+    return _out;
+  }
+  switch (node->type) {
+  case SyntaxTreeNodeType::VariableDeclaratorNode:
+    _out << "VariableDeclaratorNode { type: _, id: " <<
+    ((VariableDeclarator*)node)->id << ", init: " << ((VariableDeclarator*)node)->init <<
+    " }";
+    break;
+  case SyntaxTreeNodeType::VariableStatementNode:
+    _out << "VariableStatementNode { type: _, declarations: " <<
+    ((VariableStatement*)node)->declarations << " }";
+    break;
+  case SyntaxTreeNodeType::BodyNode:
+    _out << "BodyNode { type: _, statements: " <<
+    ((Body*)node)->statements << " }";
+    break;
+  case SyntaxTreeNodeType::ProgramNode:
+    _out << "ProgramNode { type: _, body: " <<
+    ((Program*)node)->body << " }";
     break;
   }
   return _out;
@@ -76,7 +121,6 @@ Program* SyntaxTree::CreateProgram(Body* body) {
 }
 
 bool Parser::IsSamePunctuation(const String& value) {
-  DEBUG << look_ahead << " may be a , for splitting." << endl;
   return look_ahead->type == TokenType::Punctuator &&
     ((PunctuatorToken *)look_ahead)->value == value;
 }
@@ -114,7 +158,6 @@ void Parser::SkipUselessness() {
 
 void Parser::GetKeyword(const String& keyword) {
   Token* token = Lex();
-  DEBUG << "Look ahead: " << look_ahead->type << endl;
   if (token->type != TokenType::Keyword ||
       ((IdentifierToken *)token)->name != keyword) {
     throw runtime_error("Expected word " + Encoding::UTF32ToUTF8(keyword) +
@@ -389,7 +432,7 @@ Body* Parser::ParseBody() {
   while (index < length) {
     if ((statement = ParseStatement()) != NULL) {
       DEBUG << "Parsed statement type: " << statement->type << endl;
-      body->children.push_back(statement);
+      body->statements.push_back(statement);
     } else {
       break;
     }
@@ -407,7 +450,9 @@ Program* Parser::ParseProgram(String code) {
   look_ahead = NULL;
   DEBUG << source << endl;
   Peek();
-  return delegate.CreateProgram(ParseBody());
+  SyntaxTreeNode* node = delegate.CreateProgram(ParseBody());
+  DEBUG << "Parsed program: " << endl << node << endl;
+  return (Program *)node;
 }
 
 SyntaxTree delegate;

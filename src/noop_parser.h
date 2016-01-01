@@ -20,7 +20,7 @@ enum {
   Punctuator
 };
 
-} // TokenType
+} // namespace TokenType
 
 struct Token {
   int type, start, end;
@@ -57,12 +57,16 @@ struct NumericLiteralToken: Token {
   }
 };
 
+namespace SyntaxTreeNodeType {
+
 enum {
   VariableDeclaratorNode,
   VariableStatementNode,
   BodyNode,
   ProgramNode
 };
+
+} // namespace SyntaxTreeNodeType
 
 /* Just an interface */
 struct SyntaxTreeNode {
@@ -84,7 +88,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   IdentifierToken* id;
   Expression* init;
   VariableDeclarator() {
-    type = VariableDeclaratorNode;
+    type = SyntaxTreeNodeType::VariableDeclaratorNode;
   }
 };
 
@@ -92,7 +96,7 @@ struct VariableStatement: Statement {
   std::vector<VariableDeclarator*> declarations;
   String kind;
   VariableStatement() {
-    type = VariableStatementNode;
+    type = SyntaxTreeNodeType::VariableStatementNode;
   }
 };
 
@@ -101,16 +105,16 @@ struct ExpressionStatement: Statement {
 };
 
 struct Body: Statement {
-  std::vector<Statement*> children;
+  std::vector<Statement*> statements;
   Body() {
-    type = BodyNode;
+    type = SyntaxTreeNodeType::BodyNode;
   }
 };
 
 struct Program: SyntaxTreeNode {
   Body* body;
   Program() {
-    type = ProgramNode;
+    type = SyntaxTreeNodeType::ProgramNode;
   }
 };
 
