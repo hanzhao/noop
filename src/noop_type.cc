@@ -53,7 +53,7 @@ bool IsIdentifierHead(Char c) {
     (c >= 0xF900 && c <= 0xFD3D) || (c >= 0xFD40 && c <= 0xFDCF) ||
     (c >= 0xFDF0 && c <= 0xFE1F) || (c >= 0xFE30 && c <= 0xFE44) ||
     // identifier-head → U+FE47–U+FFFD
-    (c >= 0xFE47 && c <= 0xFFFD)
+    (c >= 0xFE47 && c <= 0xFFFD) ||
     // identifier-head → U+10000–U+1FFFD, U+20000–U+2FFFD, U+30000–U+3FFFD, or U+40000–U+4FFFD
     (c >= 0x10000 && c <= 0x1FFFD) || (c >= 0x20000 && c <= 0x2FFFD) ||
     (c >= 0x30000 && c <= 0x3FFFD) || (c >= 0x40000 && c <= 0x4FFFD) ||

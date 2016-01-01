@@ -1,6 +1,10 @@
 #include <noop_parser.h>
 
-#include <stdexcpt>
+#include <stdexcept>
+#include <sstream>
+
+#include <noop_io.h>
+#include <noop_type.h>
 
 using namespace std;
 
@@ -8,16 +12,76 @@ using namespace std;
 
 namespace noop {
 
-Token::Token(int type, int start, int end)
-    : type(type), start(start), end(end) {
+/* I/O Helper */
+
+ostream& operator <<(ostream& _out, Token* token) {
+  /*
+    EndOfSource,
+    Keyword,
+    Identifier,
+    BooleanLiteral,
+    NullLiteral,
+    NumberLiteral,
+    StringLiteral,
+    Punctuator
+  */
+  switch (token->type) {
+  case TokenType::EndOfSource:
+    _out << "Token { type: TokenType::EndOfSource }";
+    break;
+  case TokenType::Keyword:
+    _out << "Token { type: TokenType::Keyword, name: " <<
+    ((IdentifierToken *)token)->name << ", start: " << token->start
+    << ", end: " << token->end << " }";
+    break;
+  case TokenType::Identifier:
+    _out << "Token { type: TokenType::Identifier, name: " <<
+    ((IdentifierToken *)token)->name << ", start: " << token->start
+    << ", end: " << token->end << " }";
+    break;
+  case TokenType::Punctuator:
+    _out << "Token { type: TokenType::Punctuator, name: " <<
+    ((PunctuatorToken *)token)->value << ", start: " << token->start
+    << ", end: " << token->end << " }";
+    break;
+  }
+  return _out;
 }
 
-bool IsSamePunctuation(const String& value) {
-  return look_ahead->type == Token::Punctuator &&
-    ((IdentifierToken *)look_ahead)->value == value;
+/* Syntax Tree Resolver */
+VariableDeclarator* SyntaxTree::CreateVariableDeclarator(IdentifierToken* id,
+                                                         Expression* init) {
+  VariableDeclarator* node = new VariableDeclarator();
+  node->id = id;
+  node->init = init;
+  return node;
 }
 
-void SkipUselessness() {
+VariableStatement* SyntaxTree::CreateVariableStatement(String kind,
+                                    vector<VariableDeclarator *> declarations) {
+  VariableStatement* node = new VariableStatement();
+  node->kind = kind;
+  node->declarations = declarations;
+  return node;
+}
+
+ExpressionStatement* SyntaxTree::CreateExpressionStatement(Expression* expr) {
+  /* TODO */
+}
+
+Program* SyntaxTree::CreateProgram(Body* body) {
+  Program* node = new Program();
+  node->body = body;
+  return node;
+}
+
+bool Parser::IsSamePunctuation(const String& value) {
+  DEBUG << look_ahead << " may be a , for splitting." << endl;
+  return look_ahead->type == TokenType::Punctuator &&
+    ((PunctuatorToken *)look_ahead)->value == value;
+}
+
+void Parser::SkipUselessness() {
   Char c;
   bool blocking, lining;
   while (index < length) {
@@ -28,7 +92,7 @@ void SkipUselessness() {
         lining = false;
       }
     } else if (blocking) {
-      index += 1
+      index += 1;
       if (c == '*' && source[index + 1] == '/') {
         index += 1;
         blocking = false;
@@ -48,17 +112,19 @@ void SkipUselessness() {
   }
 }
 
-void GetKeyword(const String& keyword) {
-  Token* token = lex();
-  if (token->type != TokenType::Identifier ||
-      ((IdentifierToken *)token)->value != keyword) {
-    throw runtime_error("Expected word " + keyword + " is not matched.");
+void Parser::GetKeyword(const String& keyword) {
+  Token* token = Lex();
+  DEBUG << "Look ahead: " << look_ahead->type << endl;
+  if (token->type != TokenType::Keyword ||
+      ((IdentifierToken *)token)->name != keyword) {
+    throw runtime_error("Expected word " + Encoding::UTF32ToUTF8(keyword) +
+                        " is not matched.");
   }
 }
 
-void GetSemicolon() {
+void Parser::GetSemicolon() {
   if (source[index] == 59) {
-    lex();
+    Lex();
     return;
   }
 }
@@ -66,7 +132,7 @@ void GetSemicolon() {
 /*
  * Token Getter
  */
-StringLiteralToken* GetStringLiteral() {
+StringLiteralToken* Parser::GetStringLiteral() {
   int quote = source[index];
   int start = index++;
   String str;
@@ -78,9 +144,9 @@ StringLiteralToken* GetStringLiteral() {
       break;
     }
     /* \ */
-    else if (ch == '\\') {
-      ch = source[index++];
-      switch (ch) {
+    else if (c == '\\') {
+      c = source[index++];
+      switch (c) {
       case 'b':
         str += U'\b';
         break;
@@ -115,7 +181,7 @@ StringLiteralToken* GetStringLiteral() {
   return token;
 }
 
-NumericLiteralToken* GetNumericLiteral() {
+NumericLiteralToken* Parser::GetNumericLiteral() {
   String str = U"";
   int start = index, c;
   while (index < length) {
@@ -126,17 +192,18 @@ NumericLiteralToken* GetNumericLiteral() {
   }
   NumericLiteralToken* token = new NumericLiteralToken(TokenType::NumberLiteral,
                                                        start, index);
-  streamstring(Encoding::UTF32ToUTF8(str)) >> token->value;
+  stringstream(Encoding::UTF32ToUTF8(str)) >> token->value;
   return token;
 }
 
-IdentifierToken* GetIdentifier() {
+IdentifierToken* Parser::GetIdentifier() {
   String str = U"";
   int start = index, type, c;
   while (index < length) {
-    c = source[index++];
+    c = source[index];
     if (!CharType::IsIdentifier(c))
       break;
+    index += 1;
     str += c;
   }
   if (StringType::IsKeyword(str)) {
@@ -153,7 +220,7 @@ IdentifierToken* GetIdentifier() {
   return token;
 }
 
-PunctuatorToken* GetPunctuator() {
+PunctuatorToken* Parser::GetPunctuator() {
   /* 1x-terminal */
   int start = index;
   Char c = source[index];
@@ -168,7 +235,7 @@ PunctuatorToken* GetPunctuator() {
   /* 3x: ===, !== */
   Char c2 = source[index + 1];
   Char c3 = source[index + 2];
-  if (c2 == '=' && c3 == '=' && (c1 == '!' || c1 == '=')) {
+  if (c2 == '=' && c3 == '=' && (c == '!' || c == '=')) {
     index += 3;
     PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
                                                  start, index);
@@ -216,10 +283,10 @@ Token* Parser::LookAhead() {
   if (c == '\'' || c == '"') {
     return GetStringLiteral();
   }
-  if (Char::IsDigit(c)) {
+  if (CharType::IsDigit(c)) {
     return GetNumericLiteral();
   }
-  if (Char::IsIdentifier(c)) {
+  if (CharType::IsIdentifier(c)) {
     return GetIdentifier();
   }
   return GetPunctuator();
@@ -235,16 +302,21 @@ void Parser::Peek() {
 /*
  * Get this token
  */
-Token* Lex() {
+Token* Parser::Lex() {
   Token* token = look_ahead;
-  index = token->start;
+  index = token->end;
+  DEBUG << "Token before LookAhead" << look_ahead << endl;
+  DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
-  index = token->start;
+  index = token->end;
+  DEBUG << "Token after LookAhead" << look_ahead << endl;
+  DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
-VariableDeclarator* ParseVariableDeclarator(const String& kind) {
-  Identifier* id = ParseVariableIdentifier();
+VariableDeclarator* Parser::ParseVariableDeclarator() {
+  IdentifierToken* id = (IdentifierToken*)Lex();
+  DEBUG << "Parsed var declarator: " << id << ", look ahead" << look_ahead << endl;
   Expression* init = NULL;
 //  if (IsSamePunctuation("=")) {
 //    lex();
@@ -253,15 +325,20 @@ VariableDeclarator* ParseVariableDeclarator(const String& kind) {
   return delegate.CreateVariableDeclarator(id, init);
 }
 
-vector<VariableDeclarator *> ParseVariableDeclarationList(const String& kind) {
+vector<VariableDeclarator *> Parser::ParseVariableDeclarationList(const String& kind) {
   vector<VariableDeclarator *> res;
   do {
-    res.push_back(ParseVariableDeclarator(kind));
-    if (!IsSamePunctuation(",")) {
+    if (look_ahead->type != TokenType::Identifier) {
+      throw runtime_error("Var declaration needs an identifier");
+    }
+    res.push_back(ParseVariableDeclarator());
+    DEBUG << "A var declarator pushed back, look_head " << look_ahead << endl;
+    if (!IsSamePunctuation(U",")) {
       break;
     }
-    lex()
+    Lex();
   } while (index < length);
+  DEBUG << "Variable declaration list size: " << res.size() << endl;
   return res;
 }
 
@@ -275,15 +352,15 @@ VariableStatement* Parser::ParseVariableStatement() {
 
 Statement* Parser::ParseStatement() {
   int type = look_ahead->type;
-  if (type == Token::EndOfSource)
+  if (type == TokenType::EndOfSource)
     return NULL;
-  if (type == Token::Keyword) {
-    String value = ((IdentifierToken *)look_ahead)->value;
+  if (type == TokenType::Keyword) {
+    String value = ((IdentifierToken *)look_ahead)->name;
     if (value == U"var") {
       return ParseVariableStatement();
     }
   }
-  if (type == Token::Punctuator) {
+  if (type == TokenType::Punctuator) {
     String value = ((PunctuatorToken *)look_ahead)->value;
     // if (value == ";")
     if (value == U"{") {
@@ -293,9 +370,9 @@ Statement* Parser::ParseStatement() {
     } // else if (value == U"(")
   //    return ParseExpression();
   }
-  expr = ParseExpression();
-  GetSemicolon();
-  return delegate.CreateExpressionStatement(expr);
+  // expr = ParseExpression();
+  // GetSemicolon();
+  // return delegate.CreateExpressionStatement(expr);
 }
 
 /*
@@ -307,10 +384,11 @@ Body* Parser::ParseBody() {
   // block ?
   if (look_ahead->type == TokenType::Punctuator &&
       ((PunctuatorToken *)look_ahead)->value == U"{") {
-    lex();
+    Lex();
   }
   while (index < length) {
     if ((statement = ParseStatement()) != NULL) {
+      DEBUG << "Parsed statement type: " << statement->type << endl;
       body->children.push_back(statement);
     } else {
       break;
@@ -327,8 +405,11 @@ Program* Parser::ParseProgram(String code) {
   index = 0;
   length = code.length();
   look_ahead = NULL;
+  DEBUG << source << endl;
   Peek();
-  return ParseBody();
+  return delegate.CreateProgram(ParseBody());
 }
+
+SyntaxTree delegate;
 
 } // namespace noop
