@@ -35,6 +35,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Code length: " << code.length() << endl;
   Parser().ParseProgram(code);
   noop::PoolInit(pool);
+>>>>>>> noop context first
   return 0;
 }
 
