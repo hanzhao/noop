@@ -608,9 +608,6 @@ Expression* Parser::ParsePostfixExpression() {
       Lex(); // [
       Expression* property = ParseComputedProperty();
       expr = delegate.CreateMemberExpression(U"[", expr, property);
-      token = Lex(); // ]
-      assert(token->type == TokenType::Punctuator &&
-             ((PunctuatorToken*)token)->value == U"]");
     } else if (IsPunctuation(U"(")) {
       Lex(); // (
       vector<Expression*> args = ParseArguments();
@@ -737,8 +734,8 @@ Statement* Parser::ParseStatement() {
       return ParseBody();
     } else if (value == U"}") {
       return NULL;
-    } // else if (value == U"(")
-  //    return ParseExpression();
+    }  else if (value == U"(")
+      return delegate.CreateExpressionStatement(ParseExpression());
   }
   Expression* expr = ParseExpression();
   GetSemicolon();

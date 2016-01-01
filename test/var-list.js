@@ -1,4 +1,4 @@
-var a, b, c, 🐭🐵🐱;
-var d, e;
-var f;
-var g;
+var animals = "🐭🐵🐱";
+console.log(animals[0]);
+console.log(animals[1]);
+console.log(animals[2]);
