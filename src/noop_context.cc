@@ -1,24 +1,16 @@
-#include <noop_parer.h>
-#include <hash_map>
+#include <noop_parser.h>
+#include <noop_context.h>
 
 namespace noop {
-  struct Context {
-    Context(){fa = NULL;}
-    Context(Context* _fa):fa(_fa){}
-  };
-  bool Context::InFatherContext(string s) {
-      Context *fin = fa;
-      while(fin != NULL) {
-          if (fin->HashMap[s] != 0) {
-              return true;
-          }
-          fin = fa->fa;
-      }
-      return false;
+int Context::LookUp(String s) {
+  auto res = var_table.find(s);
+  if (res != var_table.end()) {
+    return res->second;
   }
-  bool Context::InContext(string s) {
-    if (HashMap[s] != 0)
-      return true;
-    else InFatherContext(s);
+
+  if (father != NULL) {
+    return father->LookUp(s);
   }
+  return 0;
+}
 } // noop

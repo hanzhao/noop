@@ -8,50 +8,55 @@
 
 namespace noop {
 
-class Object {
-public:
-  std::string type;
-  Object(std::string type): type(type) {}
-  virtual ~Object() {}
+namespace ObjectType {
+enum {
+  Object,
+  NullObject,
+  StringObject,
+  NumericObject,
+  BooleanObject,
+  UndefinedObject
+};
+}
+
+struct Object {
+  int type;
+  Object(int type): type(type) {}
   template <class T> bool is() {
-    return dynamic_cast<T *>(this) != NULL;
+    return dynamic_cast<T*>(this) != NULL;
   }
-  template <class T> T *as() {
-    T *t = dynamic_cast<T *>(this);
+  template <class T> T* as() {
+    T* t = dynamic_cast<T *>(this);
     return t;
   }
 };
 
-class NullObject: public Object {
-public:
-  NullObject(): Object("null") {}
+struct NullObject: Object {
+  NullObject(): Object(ObjectType::NullObject) {}
 };
 
-class StringObject: public Object {
-public:
+struct StringObject: Object {
   std::string value;
   StringObject(std::string value)
-    : Object("string"),
+    : Object(ObjectType::StringObject),
       value(value) {}
 };
 
-class NumericObject: public Object {
-public:
+struct NumericObject: Object {
   double value;
   NumericObject(double value)
-    : Object("number"),
+    : Object(ObjectType::NumericObject),
       value(value) {}
 };
 
-class BooleanObject: public Object {
-public:
+struct BooleanObject: Object {
   bool value;
   BooleanObject(bool value)
-    : Object("bool"),
+    : Object(ObjectType::BooleanObject),
       value(value) {}
 };
 
-typedef std::vector<Object *> Pool;
+typedef std::vector<Object*> Pool;
 void PoolInit(Pool& pool);
 extern Pool pool;
 }

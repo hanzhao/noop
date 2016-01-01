@@ -1,11 +1,17 @@
 #ifndef NOOP_CONTEXT_H
 #define NOOP_CONTEXT_H
 
+#include <noop.h>
+#include <noop_pool.h>
+
+#include <unordered_map>
+
 namespace noop {
 struct Context {
-  Context();
-  Context(Context* _fa);
-  bool InFatherContext(string s);
-  bool InContext(string s);
-}
+  Context *father;
+  std::unordered_map<String, size_t> var_table;
+  Context(Context* father): father(father) {}
+  int LookUp(String s);
+};
 } // noop
+#endif

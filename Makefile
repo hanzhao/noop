@@ -12,7 +12,8 @@ ALL_DEPS = $(SRC_PATH)/noop.h \
 					 $(SRC_PATH)/noop_switches.h \
 					 $(SRC_PATH)/noop_parser.h \
 					 $(SRC_PATH)/noop_type.h \
-					 $(SRC_PATH)/noop_pool.h
+					 $(SRC_PATH)/noop_pool.h \
+					 $(SRC_PATH)/noop_context.h
 
 ALL_OBJS = $(SRC_PATH)/noop.o \
 					 $(SRC_PATH)/noop_core.o \
@@ -20,7 +21,8 @@ ALL_OBJS = $(SRC_PATH)/noop.o \
 					 $(SRC_PATH)/noop_switches.o \
 					 $(SRC_PATH)/noop_parser.o \
 					 $(SRC_PATH)/noop_type.o \
-					 $(SRC_PATH)/noop_pool.o
+					 $(SRC_PATH)/noop_pool.o \
+					 $(SRC_PATH)/noop_context.o
 
 
 noop: $(ALL_OBJS)

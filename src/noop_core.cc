@@ -7,6 +7,7 @@
 #include <noop_io.h>
 #include <noop_parser.h>
 #include <noop_pool.h>
+#include <noop_context.h>
 
 using namespace std;
 
@@ -34,7 +35,20 @@ int ExecuteFromFile(string script) {
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
   Parser().ParseProgram(code);
+  Context *context = new Context(NULL);
+
   noop::PoolInit(pool);
+
+  context->var_table[U"undefined"] = 0;
+
+  Context *body = new Context(context);
+
+  body->var_table[U"true"] = 3;
+
+  DEBUG << "Look up undefined " << body->LookUp(U"undefined") << endl;
+  DEBUG << "Look up true " << body->LookUp(U"true") << endl;
+  DEBUG << "Look up false " << body->LookUp(U"false") << endl;
+
   return 0;
 }
 
