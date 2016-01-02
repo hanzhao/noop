@@ -1,4 +1,4 @@
-var a = 5;
+var a = 5.1;
 var b = "string";
 var c = true;
 var d = null;

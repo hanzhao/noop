@@ -426,7 +426,7 @@ NumericLiteralToken* Parser::GetNumericLiteral() {
   int start = index, c;
   while (index < length) {
     c = source[index++];
-    if (!CharType::IsDigit(c))
+    if (!CharType::IsDigit(c) && c != U'.')
       break;
     str += c;
   }
