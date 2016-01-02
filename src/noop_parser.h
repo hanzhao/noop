@@ -75,6 +75,7 @@ enum {
   VariableDeclarator,
   VariableStatement,
   IfStatement,
+  WhileStatement,
   ExpressionStatement,
   BlockStatement,
   Body,
@@ -229,7 +230,7 @@ struct BlockStatement: Statement {
     type = SyntaxTreeNodeType::BlockStatement;
   }
   int Execute() override {
-    
+
   }
 };
 
@@ -239,6 +240,17 @@ struct IfStatement: Statement {
   Statement* alternate;
   IfStatement() {
     type = SyntaxTreeNodeType::IfStatement;
+  }
+  int Execute() override {
+    return 0;
+  }
+};
+
+struct WhileStatement: Statement {
+  Expression* test;
+  Statement* body;
+  WhileStatement() {
+    type = SyntaxTreeNodeType::WhileStatement;
   }
   int Execute() override {
     return 0;
@@ -281,6 +293,7 @@ public:
                               std::vector<VariableDeclarator*> declarations);
   IfStatement* CreateIfStatement(Expression* expr, Statement* consequent,
                                                    Statement* alternate);
+  WhileStatement* CreateWhileStatement(Expression* test, Statement* body);
   BlockStatement* CreateBlockStatement(std::vector<Statement*> statements);
   ExpressionStatement* CreateExpressionStatement(Expression* expr);
   Program* CreateProgram(Body* body);
@@ -319,6 +332,7 @@ public:
   VariableStatement* ParseVariableStatement();
   BlockStatement* ParseBlock();
   IfStatement* ParseIfStatement();
+  WhileStatement* ParseWhileStatement();
   BlockStatement* ParseBlockStatement();
   Statement* ParseStatement();
   Body* ParseBody();

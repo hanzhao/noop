@@ -49,6 +49,11 @@ ostream& operator <<(ostream& _out, Token* token) {
     ((PunctuatorToken *)token)->value << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
+  case TokenType::NumberLiteral:
+    _out << "NumberLiteral { value: " <<
+    ((NumericLiteralToken *)token)->value << ", start: " << token->start
+    << ", end: " << token->end << " }";
+    break;
   default:
     _out << "~Token { }";
     break;
@@ -84,7 +89,10 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
       BinaryExpression,
       VariableDeclarator,
       VariableStatement,
+      IfStatement,
+      WhileStatement,
       ExpressionStatement,
+      BlockStatement,
       Body,
       Program
     };
@@ -147,7 +155,11 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
   case SyntaxTreeNodeType::IfStatement:
     _out << "IfStatementNode { condition: " << ((IfStatement*)node)->condition <<
     ", consequent: " << ((IfStatement*)node)->consequent << ", alternate: " <<
-    ((IfStatement*)node)->alternate;
+    ((IfStatement*)node)->alternate << " }";
+    break;
+  case SyntaxTreeNodeType::WhileStatement:
+    _out << "WhileStatementNode { test: " << ((WhileStatement*)node)->test <<
+    ", body: " << ((WhileStatement*)node)->body << " }";
     break;
   case SyntaxTreeNodeType::BlockStatement:
     _out << "BlockStatementNode { statements: " <<
@@ -243,6 +255,14 @@ IfStatement* SyntaxTree::CreateIfStatement(Expression* expr,
   node->condition = expr;
   node->consequent = consequent;
   node->alternate = alternate;
+  return node;
+}
+
+WhileStatement* SyntaxTree::CreateWhileStatement(Expression* test,
+                                                  Statement* body) {
+  WhileStatement* node = new WhileStatement();
+  node->test = test;
+  node->body = body;
   return node;
 }
 
@@ -451,8 +471,10 @@ NumericLiteralToken* Parser::GetNumericLiteral() {
   int start = index, c;
   while (index < length) {
     c = source[index++];
-    if (!CharType::IsDigit(c) && c != U'.')
+    if (!CharType::IsDigit(c) && c != U'.') {
+      --index;
       break;
+    }
     str += c;
   }
   NumericLiteralToken* token = new NumericLiteralToken(TokenType::NumberLiteral,
@@ -507,7 +529,7 @@ PunctuatorToken* Parser::GetPunctuator() {
     token->value = token->value + c + c2 + c3;
     return token;
   }
-  /* 2x: ==, &&, ||, >=, <= */
+  /* 2x: ==, &&, ||, >=, <=, != */
   if (c == c2 && (c == '=' || c == '&' || c == '|')) {
     index += 2;
     PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
@@ -515,7 +537,7 @@ PunctuatorToken* Parser::GetPunctuator() {
     token->value = token->value + c + c2;
     return token;
   }
-  if (c2 == '=' && (c == '>' || c == '<')) {
+  if (c2 == '=' && (c == '>' || c == '<' || c == '!')) {
     index += 2;
     PunctuatorToken *token = new PunctuatorToken(TokenType::Punctuator,
                                                  start, index);
@@ -631,6 +653,17 @@ IfStatement* Parser::ParseIfStatement() {
   return delegate.CreateIfStatement(cond, consequent, alternate);
 }
 
+WhileStatement* Parser::ParseWhileStatement() {
+  GetKeyword(U"while");
+  assert(IsPunctuation(U"("));
+  Lex();
+  Expression* test = ParseExpression();
+  assert(IsPunctuation(U")"));
+  Lex();
+  Statement* body = ParseStatement();
+  return delegate.CreateWhileStatement(test, body);
+}
+
 Expression* Parser::ParsePrimaryExpression() {
   int type = look_ahead->type;
   if (type == TokenType::Identifier) {
@@ -669,11 +702,10 @@ vector<Expression*> Parser::ParseArguments() {
   Token* token;
   while (index < length && !IsPunctuation(U")")) {
     args.push_back(ParseAssignmentExpression());
-    token = Lex(); // , or )
-    if (((PunctuatorToken*)token)->value == U")")
+    if (IsPunctuation(U")")) {
       break;
-    assert(token->type == TokenType::Punctuator &&
-           ((PunctuatorToken*)token)->value == U",");
+    }
+    assert(IsPunctuation(U","));
   }
   return args;
 }
@@ -692,10 +724,12 @@ Expression* Parser::ParsePostfixExpression() {
       Lex(); // [
       Expression* property = ParseComputedProperty();
       expr = delegate.CreateMemberExpression(U"[", expr, property);
+      Lex(); // ]
     } else if (IsPunctuation(U"(")) {
       Lex(); // (
       vector<Expression*> args = ParseArguments();
       expr = delegate.CreateCallExpression(expr, args);
+      Lex(); // )
     }
   }
   return expr;
@@ -812,7 +846,7 @@ Statement* Parser::ParseStatement() {
     } else if (value == U"if") {
       return ParseIfStatement();
     } else if (value == U"while") {
-    //  return ParseWhileStatement();
+      return ParseWhileStatement();
     } else if (value == U"function") {
     //  return ParseFunctionStatement();
     }
