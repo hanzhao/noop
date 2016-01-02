@@ -6,6 +6,17 @@
 using namespace std;
 
 namespace noop {
+
+size_t Object::JumpToProperty(String pro) {
+  auto fd = properties.find(pro);
+  if (fd != properties.end())
+    return fd->second;
+  else {
+    pool.push_back(pool[0]);
+    return pool.size() - 1;
+  }
+}
+
 Pool pool;
 void PoolInit(Pool& pool) {
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);

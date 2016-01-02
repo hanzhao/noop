@@ -1022,7 +1022,15 @@ int ThisExpression::Execute() {
 }
 
 int MemberExpression::Execute() {
-  return 0;
+  size_t res = 0;
+  if(left->type == SyntaxTreeNodeType::Identifier)
+    res = current_context->var_table[((Identifier*)left)->name];
+  else if (left->type == SyntaxTreeNodeType::MemberExpression) {
+    res = left->Execute();
+  }
+  if (res == 0)
+    throw runtime_error("Can not find property " + Encoding::UTF32ToUTF8(((Identifier*)right)->name) + " of undefined");
+  return pool[res]->JumpToProperty(((Identifier*)right)->name);
 }
 
 int CallExpression::Execute() {
@@ -1030,9 +1038,16 @@ int CallExpression::Execute() {
 }
 
 int AssignmentExpression::Execute() {
-  current_context->var_table[((Identifier*)left)->name] = right->Execute();
-  DEBUG << ((Identifier*)left)->name << " is set to " <<
-           pool[current_context->var_table[((Identifier*)left)->name]] << endl;
+  if (left->type == SyntaxTreeNodeType::Identifier) {
+    current_context->var_table[((Identifier*)left)->name] = right->Execute();
+    DEBUG << ((Identifier*)left)->name << " is set to " <<
+             pool[current_context->var_table[((Identifier*)left)->name]] << endl;
+  }
+  else if (left->type == SyntaxTreeNodeType::MemberExpression) {
+    int id = left->Execute(), right_id = right->Execute();
+    pool[id] = pool[right_id];
+    DEBUG << "Left MemberExpression is set to " << pool[id] << endl;
+  }
   return 0;
 }
 

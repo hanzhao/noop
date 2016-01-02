@@ -9,9 +9,9 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <unordered_map>
 
 namespace noop {
-
 namespace ObjectType {
 enum {
   Object,
@@ -29,7 +29,9 @@ struct Object {
   int type;
   virtual bool ToNumber(Number& res) { res = 0; return false; };
   virtual bool ToString(String& res) { res = U""; return false; };
+  std::unordered_map<String, size_t> properties;
   Object(int type): type(type) {}
+  size_t JumpToProperty(String pro);
 };
 
 struct StringObject: Object {
