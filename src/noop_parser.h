@@ -230,9 +230,7 @@ struct BlockStatement: Statement {
   BlockStatement() {
     type = SyntaxTreeNodeType::BlockStatement;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct IfStatement: Statement {
@@ -242,9 +240,7 @@ struct IfStatement: Statement {
   IfStatement() {
     type = SyntaxTreeNodeType::IfStatement;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct WhileStatement: Statement {

@@ -66,7 +66,8 @@ struct NumericObject: Object {
     std::stringstream sio(_tmp);
     sio.precision(17);
     sio << value;
-    res = Encoding::UTF8ToUTF32((_tmp));
+    sio >> _tmp;
+    res = Encoding::UTF8ToUTF32(_tmp);
     return true;
   };
   NumericObject(Number value)

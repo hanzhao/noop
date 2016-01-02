@@ -956,6 +956,30 @@ Program* Parser::ParseProgram(String code) {
 
 SyntaxTree delegate;
 
+bool IsFalse(int pos) {
+  if ((pool[pos]->type == ObjectType::BooleanObject) &&
+      (!(((BooleanObject*)pool[pos])->value))) {
+    return true;
+  }
+  if (pool[pos]->type == ObjectType::NullObject ||
+      pool[pos]->type == ObjectType::UndefinedObject ||
+      pool[pos]->type == ObjectType::NaNObject) {
+    return true;
+  }
+  if ((pool[pos]->type == ObjectType::NumericObject) &&
+      (!(((NumericObject*)pool[pos])->value))) {
+    return true;
+  }
+  return false;
+}
+
+bool IsInt(Number value) {
+  if ((int)(value) == value) {
+    return true;
+  }
+  return false;
+}
+
 int VariableDeclarator::Execute() {
   if (init == nullptr) {
     current_context->var_table[id->name] = 0;
@@ -987,7 +1011,7 @@ int ExpressionStatement::Execute() {
 
 int Body::Execute() {
   current_context = new Context(current_context);
-  for (auto statement: statements) {
+  for (auto& statement: statements) {
     if (statement->Execute()) {
       cout << "ERROR" << endl;
       exit(-1);
@@ -1014,7 +1038,11 @@ int Program::Execute() {
   return 0;
 }
 int Identifier::Execute() {
-  return 0;
+  if (current_context->var_table.find(name) != current_context->var_table.end()) {
+    return current_context->var_table[name];
+  } else {
+    return 0;
+  }
 }
 
 int ThisExpression::Execute() {
@@ -1073,9 +1101,8 @@ int BinaryExpression::Execute() {
       );
       pool.push_back(res);
       return pool.size() - 1;
-    }
-    if (pool[left_pos]->type == ObjectType::NumericObject ||
-        pool[right_pos]->type == ObjectType::NumericObject) {
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
@@ -1128,10 +1155,290 @@ int BinaryExpression::Execute() {
     );
     pool.push_back(res);
     return pool.size() - 1;
+  } else if (_operator == U"%") {
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      Object *res = new Object(ObjectType::NaNObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    };
+    if (IsInt(left_value) && IsInt(left_value)) {
+      Object *res = new NumericObject(
+        (int)(left_value) % (int)(right_value)
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else {
+      return left_pos;
+    }
+  } else if (_operator == U"<<") {
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      Object *res = new Object(ObjectType::NaNObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    };
+    if (IsInt(left_value) && IsInt(left_value)) {
+      Object *res = new NumericObject(
+        (int)(left_value) << (int)(right_value)
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else {
+      return left_pos;
+    }
+  } else if (_operator == U">>") {
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      Object *res = new Object(ObjectType::NaNObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    };
+    if (IsInt(left_value) && IsInt(left_value)) {
+      Object *res = new NumericObject(
+        (int)(left_value) >> (int)(right_value)
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else {
+      return left_pos;
+    }
+  } else if (_operator == U"==") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value == right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value == right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"!=") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value != right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value != right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"===") {
+    if (pool[left_pos]->type == pool[right_pos]->type) {
+      if (pool[left_pos]->type == ObjectType::NumericObject ||
+          pool[left_pos]->type == ObjectType::StringObject ||
+          pool[left_pos]->type == ObjectType::BooleanObject) {
+        String left_value, right_value;
+        pool[left_pos]->ToString(left_value);
+        pool[right_pos]->ToString(right_value);
+        Object *res = new BooleanObject(
+          left_value == right_value
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      } else {
+        Object *res = new BooleanObject(
+          left_pos == right_pos
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      Object *res = new BooleanObject(
+        false
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"<") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value < right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value < right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"<=") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value <= right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value <= right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U">=") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value >= right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value >= right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U">") {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value > right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        Object *res = new Object(ObjectType::NaNObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      };
+      Object *res = new BooleanObject(
+        left_value > right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"&&") {
+    if (IsFalse(left_pos)) {
+      return left_pos;
+    } else {
+      return right_pos;
+    }
+  } else if (_operator == U"||") {
+    if (!IsFalse(left_pos)) {
+      return left_pos;
+    } else {
+      return right_pos;
+    }
   }
   Object *res = new Object(ObjectType::NaNObject);
   pool.push_back(res);
   return pool.size() - 1;
+}
+
+int BlockStatement::Execute() {
+  for (auto& statement: statements) {
+    if (statement->Execute()) {
+      cout << "ERROR" << endl;
+      exit(-1);
+    }
+  }
+  return 0;
 }
 
 int NumericLiteral::Execute() {
@@ -1159,4 +1466,12 @@ int NullLiteral::Execute() {
   return pool.size() - 1;
 }
 
+int IfStatement::Execute() {
+  if (!IsFalse(condition->Execute())) {
+
+    return consequent->Execute();
+  } else {
+    return alternate->Execute();
+  }
+}
 } // namespace noop

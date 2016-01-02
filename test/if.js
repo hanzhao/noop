@@ -1,4 +1,7 @@
-if (a == 5 && b == a) {
-  console.log("Con. 1");
+var x = 5;
+var y = "5";
+var z = 5.0;
+if (x == y && y == z) {
+  var c = 3;
 } else
-  console.log("Con. 2");
+  var c = 4;
