@@ -545,12 +545,12 @@ void Parser::Peek() {
 Token* Parser::Lex() {
   Token* token = look_ahead;
   index = token->end;
-  DEBUG << "Token before LookAhead" << look_ahead << endl;
-  DEBUG << "Index before LookAhead: " << token->end << endl;
+//  DEBUG << "Token before LookAhead" << look_ahead << endl;
+//  DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
   index = token->end;
-  DEBUG << "Token after LookAhead" << look_ahead << endl;
-  DEBUG << "Index after LookAhead: " << token->end << endl;
+//  DEBUG << "Token after LookAhead" << look_ahead << endl;
+//  DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
@@ -865,8 +865,8 @@ int Body::Execute() {
   DEBUG << pool[current_context->var_table[U"e"]]->value << endl;
   DEBUG << pool[current_context->var_table[U"f"]]->value << endl;
   */
-  DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NaNObject << endl;
-  DEBUG << ((NumericObject*)pool[pool.size() - 1])->value << endl;
+  // DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NaNObject << endl;
+  // DEBUG << ((NumericObject*)pool[pool.size() - 1])->value << endl;
   return 0;
 }
 
@@ -895,7 +895,8 @@ int CallExpression::Execute() {
 
 int AssignmentExpression::Execute() {
   current_context->var_table[((Identifier*)left)->name] = right->Execute();
-  DEBUG << pool[current_context->var_table[((Identifier*)left)->name]] << endl;
+  DEBUG << ((Identifier*)left)->name << " is set to " <<
+           pool[current_context->var_table[((Identifier*)left)->name]] << endl;
   return 0;
 }
 
