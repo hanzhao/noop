@@ -324,7 +324,7 @@ bool Parser::IsIdentifierName(Token* token) {
 
 void Parser::SkipUselessness() {
   Char c;
-  bool blocking, lining;
+  bool blocking = false, lining = false;
   while (index < length) {
     c = source[index];
     if (lining) {
