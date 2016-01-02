@@ -1,11 +1,13 @@
 #include <noop_parser.h>
-
-#include <stdexcept>
-#include <sstream>
-
 #include <noop_io.h>
 #include <noop_type.h>
 #include <noop_context.h>
+#include <noop_pool.h>
+
+#include <stdexcept>
+#include <sstream>
+#include <string>
+
 
 using namespace std;
 
@@ -781,188 +783,359 @@ Program* Parser::ParseProgram(String code) {
 
 SyntaxTree delegate;
 
-bool VariableDeclarator::Execute() {
+int VariableDeclarator::Execute() {
   if (init == NULL) {
-    current_context->var_table[id->name] = pool.size();
-    Object *tmp_obj = new Object(ObjectType::UndefinedObject);
-    DEBUG << "undefined_obj: " << (tmp_obj->type) << endl;
-    pool.push_back(tmp_obj);
-    DEBUG << "Look up undefined " << current_context->LookUp(U"undefined") << endl;
-    DEBUG << "Look up " << id->name << " " << current_context->LookUp(id->name) << endl;
+    current_context->var_table[id->name] = 0;
   };
-  return true;
+  return 0;
 }
 
-bool VariableStatement::Execute() {
+int VariableStatement::Execute() {
   for (auto declaration: declarations) {
-    if (!declaration->Execute()) {
+    if (declaration->Execute()) {
       cout << "ERROR" << endl;
       exit(0);
     }
   }
-  return true;
+  return 0;
 }
 
-bool ExpressionStatement::Execute() {
-  /* TODO */
-  return true;
+int ExpressionStatement::Execute() {
+  if (expression->Execute()) {
+    cout << "ERROR" << endl;
+    exit(0);
+  }
+  return 0;
 }
 
-bool Body::Execute() {
+int Body::Execute() {
   current_context = new Context(current_context);
   for (auto statement: statements) {
-    if (!statement->Execute()) {
+    if (statement->Execute()) {
       cout << "ERROR" << endl;
       exit(0);
     }
   }
-  return true;
+  /*
+  DEBUG << ((NumericObject*)pool[current_context->var_table[U"a"]])->value << endl;
+  DEBUG << pool[current_context->var_table[U"b"]]->value << endl;
+  DEBUG << pool[current_context->var_table[U"c"]]->value << endl;
+  DEBUG << pool[current_context->var_table[U"d"]]->value << endl;
+  DEBUG << pool[current_context->var_table[U"e"]]->value << endl;
+  DEBUG << pool[current_context->var_table[U"f"]]->value << endl;
+  */
+  DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NanObject << endl;
+  DEBUG << ((NumericObject*)pool[pool.size() - 1])->value << endl;
+  return 0;
 }
 
-bool Program::Execute() {
+int Program::Execute() {
   current_context = global_context;
   if (body != NULL) {
     return body->Execute();
   }
-  return true;
+  return 0;
 }
-/*
-struct Identifier: Expression {
-  String name;
-  Identifier() {
-    type = SyntaxTreeNodeType::Identifier;
-  }
-  bool Execute();
-};
-
-struct ThisExpression: Expression {
-  ThisExpression() {
-    type = SyntaxTreeNodeType::ThisExpression;
-  }
-  bool Execute();
-};
-
-struct MemberExpression: Expression {
-  String _operator;
-  Expression* left;
-  Expression* right;
-  MemberExpression() {
-    type = SyntaxTreeNodeType::MemberExpression;
-  }
-  bool Execute();
-};
-
-struct CallExpression: Expression {
-  Expression* callee;
-  std::vector<Expression*> arguments;
-  CallExpression() {
-    type = SyntaxTreeNodeType::CallExpression;
-  }
-  bool Execute();
-};
-
-struct AssignmentExpression: Expression {
-  String _operator;
-  Expression* left;
-  Expression* right;
-  AssignmentExpression() {
-    type = SyntaxTreeNodeType::AssignmentExpression;
-  }
-  bool Execute();
-};
-
-struct SequenceExpression: Expression {
-  std::vector<Expression *> expressions;
-  SequenceExpression() {
-    type = SyntaxTreeNodeType::SequenceExpression;
-  }
-  bool Execute();
-};
-
-struct BinaryExpression: Expression {
-  String _operator;
-  Expression* left;
-  Expression* right;
-  BinaryExpression() {
-    type = SyntaxTreeNodeType::BinaryExpression;
-  }
-  bool Execute();
-};
-*/
-bool Identifier::Execute() {
-  return true;
+int Identifier::Execute() {
+  return 0;
 }
 
-bool ThisExpression::Execute() {
-  return true;
+int ThisExpression::Execute() {
+  return 0;
 }
 
-bool MemberExpression::Execute() {
-  return true;
+int MemberExpression::Execute() {
+  return 0;
 }
 
-bool CallExpression::Execute() {
-  return true;
+int CallExpression::Execute() {
+  return 0;
 }
 
-bool AssignmentExpression::Execute() {
-  return true;
+int AssignmentExpression::Execute() {
+  current_context->var_table[((Identifier*)left)->name] = right->Execute();
+  return 0;
 }
 
-bool SequenceExpression::Execute() {
-  return true;
+int SequenceExpression::Execute() {
+  return 0;
 }
 
-bool BinaryExpression::Execute() {
-  return true;
-}
-/*
-struct NumberLiteral: Literal {
-  Number value;
-  NumberLiteral() {
-    type = SyntaxTreeNodeType::NumberLiteral;
+int BinaryExpression::Execute() {
+  int left_pos = left->Execute();
+  int right_pos = right->Execute();
+  if (_operator == U"+") {
+    if (pool[left_pos]->type == pool[right_pos]->type) {
+      /* number + number */
+      if (pool[left_pos]->type == ObjectType::NumericObject) {
+        Object *res = new NumericObject(
+          ((NumericObject*)pool[left_pos])->value + \
+          ((NumericObject*)pool[right_pos])->value
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      } else if (pool[left_pos]->type == ObjectType::StringObject) {
+        Object *res = new StringObject(
+          ((StringObject*)pool[left_pos])->value + \
+          ((StringObject*)pool[right_pos])->value
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      } else {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      double left_value, right_value;
+      if (pool[left_pos]->type == ObjectType::NumericObject) {
+        /* Number */
+        left_value = ((NumericObject*)pool[left_pos])->value;
+      } else if (pool[left_pos]->type == ObjectType::StringObject) {
+        /* String */
+        try {
+          left_value = stod(
+            Encoding::UTF32ToUTF8(
+              ((StringObject*)pool[left_pos])->value
+            )
+          );
+        } catch (const invalid_argument& ia) {
+          Object *res = new Object(ObjectType::NanObject);
+          pool.push_back(res);
+          return pool.size() - 1;
+        }
+      } else {
+        /* Array */
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+      if (pool[right_pos]->type == ObjectType::NumericObject) {
+        /* Number */
+        right_value = ((NumericObject*)pool[right_pos])->value;
+      } else if (pool[right_pos]->type == ObjectType::StringObject) {
+        /* String */
+        try {
+          right_value = stod(
+            Encoding::UTF32ToUTF8(
+              ((StringObject*)pool[right_pos])->value
+            )
+          );
+        } catch (const invalid_argument& ia) {
+          Object *res = new Object(ObjectType::NanObject);
+          pool.push_back(res);
+          return pool.size() - 1;
+        }
+      } else {
+        /* Array */
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+      Object *res = new NumericObject(
+        left_value + right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"-") {
+    if (pool[left_pos]->type == pool[right_pos]->type) {
+      /* number - number */
+      if (pool[left_pos]->type == ObjectType::NumericObject) {
+        Object *res = new NumericObject(
+          ((NumericObject*)pool[left_pos])->value - \
+          ((NumericObject*)pool[right_pos])->value
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      } else {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      double left_value, right_value;
+      if (pool[left_pos]->type == ObjectType::NumericObject) {
+        /* Number */
+        left_value = ((NumericObject*)pool[left_pos])->value;
+      } else if (pool[left_pos]->type == ObjectType::StringObject) {
+        /* String */
+        try {
+          left_value = stod(
+            Encoding::UTF32ToUTF8(
+              ((StringObject*)pool[left_pos])->value
+            )
+          );
+        } catch (const invalid_argument& ia) {
+          Object *res = new Object(ObjectType::NanObject);
+          pool.push_back(res);
+          return pool.size() - 1;
+        }
+      } else {
+        /* Array */
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+      if (pool[right_pos]->type == ObjectType::NumericObject) {
+        /* Number */
+        right_value = ((NumericObject*)pool[right_pos])->value;
+      } else if (pool[right_pos]->type == ObjectType::StringObject) {
+        /* String */
+        try {
+          right_value = stod(
+            Encoding::UTF32ToUTF8(
+              ((StringObject*)pool[right_pos])->value
+            )
+          );
+        } catch (const invalid_argument& ia) {
+          Object *res = new Object(ObjectType::NanObject);
+          pool.push_back(res);
+          return pool.size() - 1;
+        }
+      } else {
+        /* Array */
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+      Object *res = new NumericObject(
+        left_value - right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"*") {
+    double left_value, right_value;
+    if (pool[left_pos]->type == ObjectType::NumericObject) {
+      /* Number */
+      left_value = ((NumericObject*)pool[left_pos])->value;
+    } else if (pool[left_pos]->type == ObjectType::StringObject) {
+      /* String */
+      try {
+        left_value = stod(
+          Encoding::UTF32ToUTF8(
+            ((StringObject*)pool[left_pos])->value
+          )
+        );
+      } catch (const invalid_argument& ia) {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      /* Array */
+      Object *res = new Object(ObjectType::NanObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+    if (pool[right_pos]->type == ObjectType::NumericObject) {
+      /* Number */
+      right_value = ((NumericObject*)pool[right_pos])->value;
+    } else if (pool[right_pos]->type == ObjectType::StringObject) {
+      /* String */
+      try {
+        right_value = stod(
+          Encoding::UTF32ToUTF8(
+            ((StringObject*)pool[right_pos])->value
+          )
+        );
+      } catch (const invalid_argument& ia) {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      /* Array */
+      Object *res = new Object(ObjectType::NanObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+    Object *res = new NumericObject(
+      left_value * right_value
+    );
+    pool.push_back(res);
+    return pool.size() - 1;
+  } else if (_operator == U"/") {
+    double left_value, right_value;
+    if (pool[left_pos]->type == ObjectType::NumericObject) {
+      /* Number */
+      left_value = ((NumericObject*)pool[left_pos])->value;
+    } else if (pool[left_pos]->type == ObjectType::StringObject) {
+      /* String */
+      try {
+        left_value = stod(
+          Encoding::UTF32ToUTF8(
+            ((StringObject*)pool[left_pos])->value
+          )
+        );
+      } catch (const invalid_argument& ia) {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      /* Array */
+      Object *res = new Object(ObjectType::NanObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+    if (pool[right_pos]->type == ObjectType::NumericObject) {
+      /* Number */
+      right_value = ((NumericObject*)pool[right_pos])->value;
+    } else if (pool[right_pos]->type == ObjectType::StringObject) {
+      /* String */
+      try {
+        right_value = stod(
+          Encoding::UTF32ToUTF8(
+            ((StringObject*)pool[right_pos])->value
+          )
+        );
+      } catch (const invalid_argument& ia) {
+        Object *res = new Object(ObjectType::NanObject);
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      /* Array */
+      Object *res = new Object(ObjectType::NanObject);
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+    Object *res = new NumericObject(
+      left_value / right_value
+    );
+    pool.push_back(res);
+    return pool.size() - 1;
   }
-  bool Execute();
-};
-
-struct StringLiteral: Literal {
-  String value;
-  StringLiteral() {
-    type = SyntaxTreeNodeType::StringLiteral;
-  }
-  bool Execute();
-};
-
-struct BooleanLiteral: Literal {
-  bool value;
-  BooleanLiteral() {
-    type = SyntaxTreeNodeType::BooleanLiteral;
-  }
-  bool Execute();
-};
-
-struct NullLiteral: Literal {
-  NullLiteral() {
-    type = SyntaxTreeNodeType::NullLiteral;
-  }
-  bool Execute();
-};
-*/
-
-bool NumberLiteral::Execute() {
-  return true;
+  Object *res = new Object(ObjectType::NanObject);
+  pool.push_back(res);
+  return pool.size() - 1;
 }
 
-bool StringLiteral::Execute() {
-  return true;
+int NumberLiteral::Execute() {
+  Object *res = new NumericObject(value);
+  pool.push_back(res);
+  return pool.size() - 1;
 }
 
-bool BooleanLiteral::Execute() {
-  return true;
+int StringLiteral::Execute() {
+  Object *res = new StringObject(value);
+  pool.push_back(res);
+  return pool.size() - 1;
 }
 
-bool NullLiteral::Execute() {
-  return true;
+int BooleanLiteral::Execute() {
+  Object *res = new BooleanObject(value);
+  pool.push_back(res);
+  return pool.size() - 1;
+}
+
+
+int NullLiteral::Execute() {
+  Object *res = new Object(ObjectType::NullObject);
+  pool.push_back(res);
+  return pool.size() - 1;
 }
 
 } // namespace noop

@@ -9,6 +9,9 @@ namespace noop {
 Pool pool;
 void PoolInit(Pool& pool) {
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);
+  pool.push_back(undefined_obj);
+  /*
+  Object *undefined_obj = new Object(ObjectType::UndefinedObject);
   DEBUG << "undefined_obj: " << (undefined_obj->type) << endl;
   pool.push_back(undefined_obj);
   Object *null_obj = new NullObject();
@@ -20,5 +23,6 @@ void PoolInit(Pool& pool) {
   Object *true_obj = new BooleanObject(true);
   DEBUG << "true_obj: " << (true_obj->type) << endl;
   pool.push_back(true_obj);
+  */
 }
 } // noop

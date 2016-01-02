@@ -11,11 +11,13 @@ namespace noop {
 namespace ObjectType {
 enum {
   Object,
+  UndefinedObject,
   NullObject,
   StringObject,
   NumericObject,
   BooleanObject,
-  UndefinedObject
+  NanObject,
+  ErrorObject
 };
 }
 
@@ -24,13 +26,9 @@ struct Object {
   Object(int type): type(type) {}
 };
 
-struct NullObject: Object {
-  NullObject(): Object(ObjectType::NullObject) {}
-};
-
 struct StringObject: Object {
-  std::string value;
-  StringObject(std::string value)
+  String value;
+  StringObject(String value)
     : Object(ObjectType::StringObject),
       value(value) {}
 };

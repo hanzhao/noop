@@ -84,13 +84,13 @@ enum {
 /* Just an interface */
 struct SyntaxTreeNode {
   int type;
-  virtual bool Execute() = 0;
+  virtual int Execute() = 0;
 };
 
 /* SyntaxTreeNode */
 
 struct Expression: SyntaxTreeNode {
-  virtual bool Execute() = 0;
+  virtual int Execute() = 0;
 };
 
 struct Literal: Expression {
@@ -102,14 +102,14 @@ struct Identifier: Expression {
   Identifier() {
     type = SyntaxTreeNodeType::Identifier;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct ThisExpression: Expression {
   ThisExpression() {
     type = SyntaxTreeNodeType::ThisExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct MemberExpression: Expression {
@@ -119,7 +119,7 @@ struct MemberExpression: Expression {
   MemberExpression() {
     type = SyntaxTreeNodeType::MemberExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct CallExpression: Expression {
@@ -128,7 +128,7 @@ struct CallExpression: Expression {
   CallExpression() {
     type = SyntaxTreeNodeType::CallExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct AssignmentExpression: Expression {
@@ -138,7 +138,7 @@ struct AssignmentExpression: Expression {
   AssignmentExpression() {
     type = SyntaxTreeNodeType::AssignmentExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct SequenceExpression: Expression {
@@ -146,7 +146,7 @@ struct SequenceExpression: Expression {
   SequenceExpression() {
     type = SyntaxTreeNodeType::SequenceExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct BinaryExpression: Expression {
@@ -156,7 +156,7 @@ struct BinaryExpression: Expression {
   BinaryExpression() {
     type = SyntaxTreeNodeType::BinaryExpression;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct NumberLiteral: Literal {
@@ -164,7 +164,7 @@ struct NumberLiteral: Literal {
   NumberLiteral() {
     type = SyntaxTreeNodeType::NumberLiteral;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct StringLiteral: Literal {
@@ -172,7 +172,7 @@ struct StringLiteral: Literal {
   StringLiteral() {
     type = SyntaxTreeNodeType::StringLiteral;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct BooleanLiteral: Literal {
@@ -180,19 +180,19 @@ struct BooleanLiteral: Literal {
   BooleanLiteral() {
     type = SyntaxTreeNodeType::BooleanLiteral;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct NullLiteral: Literal {
   NullLiteral() {
     type = SyntaxTreeNodeType::NullLiteral;
   }
-  bool Execute();
+  int Execute();
 };
 
 /* Just an interface */
 struct Statement: SyntaxTreeNode {
-  virtual bool Execute() = 0;
+  virtual int Execute() = 0;
 };
 
 struct VariableDeclarator: SyntaxTreeNode {
@@ -201,7 +201,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   VariableDeclarator() {
     type = SyntaxTreeNodeType::VariableDeclarator;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct VariableStatement: Statement {
@@ -210,7 +210,7 @@ struct VariableStatement: Statement {
   VariableStatement() {
     type = SyntaxTreeNodeType::VariableStatement;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct ExpressionStatement: Statement {
@@ -218,7 +218,7 @@ struct ExpressionStatement: Statement {
   ExpressionStatement() {
     type = SyntaxTreeNodeType::ExpressionStatement;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct Body: Statement {
@@ -226,7 +226,7 @@ struct Body: Statement {
   Body() {
     type = SyntaxTreeNodeType::Body;
   }
-  bool Execute();
+  int Execute();
 };
 
 struct Program: SyntaxTreeNode {
@@ -234,7 +234,7 @@ struct Program: SyntaxTreeNode {
   Program() {
     type = SyntaxTreeNodeType::Program;
   }
-  bool Execute();
+  int Execute();
 };
 
 /* SyntaxTreeResolver */
