@@ -597,7 +597,6 @@ vector<Expression*> Parser::ParseArguments() {
 
 Expression* Parser::ParsePostfixExpression() {
   SkipUselessness();
-  Token* token;
   Expression* expr = ParsePrimaryExpression();
   while (IsPunctuation(U".") || IsPunctuation(U"[") ||
          IsPunctuation(U"(")) {
