@@ -16,8 +16,8 @@ enum {
   StringObject,
   NumericObject,
   BooleanObject,
-  NanObject,
-  ErrorObject
+  NaNObject,
+  BlackMagicObject
 };
 }
 

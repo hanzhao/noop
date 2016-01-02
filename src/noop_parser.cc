@@ -162,6 +162,48 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
   return _out;
 }
 
+ostream& operator <<(ostream& _out, Object* obj) {
+  /*
+  enum {
+    Object,
+    UndefinedObject,
+    NullObject,
+    StringObject,
+    NumericObject,
+    BooleanObject,
+    NaNObject,
+    ErrorObject
+  }
+  */
+  switch (obj->type) {
+  case ObjectType::Object:
+    _out << "BasicObject { }";
+    break;
+  case ObjectType::UndefinedObject:
+    _out << "UndefinedObject { }";
+    break;
+  case ObjectType::NullObject:
+    _out << "NullObject { }";
+    break;
+  case ObjectType::StringObject:
+    _out << "StringObject { value: " << ((StringObject*)obj)->value << " }";
+    break;
+  case ObjectType::NumericObject:
+    _out << "NumericObject { value: " << ((NumericObject*)obj)->value << " }";
+    break;
+  case ObjectType::BooleanObject:
+    _out << "BooleanObject { value: " << (((BooleanObject*)obj)->value ? "true" : "false") << " }";
+    break;
+  case ObjectType::NaNObject:
+    _out << "NaNObject { }";
+    break;
+  case ObjectType::BlackMagicObject:
+    _out << "BlackMagicObject { }";
+    break;
+  }
+  return _out;
+}
+
 /* Syntax Tree Resolver */
 VariableDeclarator* SyntaxTree::CreateVariableDeclarator(IdentifierToken* id,
                                                          Expression* init) {
@@ -793,7 +835,7 @@ int VariableStatement::Execute() {
   for (auto declaration: declarations) {
     if (declaration->Execute()) {
       cout << "ERROR" << endl;
-      exit(0);
+      exit(-1);
     }
   }
   return 0;
@@ -802,7 +844,7 @@ int VariableStatement::Execute() {
 int ExpressionStatement::Execute() {
   if (expression->Execute()) {
     cout << "ERROR" << endl;
-    exit(0);
+    exit(-1);
   }
   return 0;
 }
@@ -812,7 +854,7 @@ int Body::Execute() {
   for (auto statement: statements) {
     if (statement->Execute()) {
       cout << "ERROR" << endl;
-      exit(0);
+      exit(-1);
     }
   }
   /*
@@ -823,7 +865,7 @@ int Body::Execute() {
   DEBUG << pool[current_context->var_table[U"e"]]->value << endl;
   DEBUG << pool[current_context->var_table[U"f"]]->value << endl;
   */
-  DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NanObject << endl;
+  DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NaNObject << endl;
   DEBUG << ((NumericObject*)pool[pool.size() - 1])->value << endl;
   return 0;
 }
@@ -853,6 +895,7 @@ int CallExpression::Execute() {
 
 int AssignmentExpression::Execute() {
   current_context->var_table[((Identifier*)left)->name] = right->Execute();
+  DEBUG << pool[current_context->var_table[((Identifier*)left)->name]] << endl;
   return 0;
 }
 
@@ -881,7 +924,7 @@ int BinaryExpression::Execute() {
         pool.push_back(res);
         return pool.size() - 1;
       } else {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -899,13 +942,13 @@ int BinaryExpression::Execute() {
             )
           );
         } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NanObject);
+          Object *res = new Object(ObjectType::NaNObject);
           pool.push_back(res);
           return pool.size() - 1;
         }
       } else {
         /* Array */
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -921,13 +964,13 @@ int BinaryExpression::Execute() {
             )
           );
         } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NanObject);
+          Object *res = new Object(ObjectType::NaNObject);
           pool.push_back(res);
           return pool.size() - 1;
         }
       } else {
         /* Array */
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -948,7 +991,7 @@ int BinaryExpression::Execute() {
         pool.push_back(res);
         return pool.size() - 1;
       } else {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -966,13 +1009,13 @@ int BinaryExpression::Execute() {
             )
           );
         } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NanObject);
+          Object *res = new Object(ObjectType::NaNObject);
           pool.push_back(res);
           return pool.size() - 1;
         }
       } else {
         /* Array */
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -988,13 +1031,13 @@ int BinaryExpression::Execute() {
             )
           );
         } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NanObject);
+          Object *res = new Object(ObjectType::NaNObject);
           pool.push_back(res);
           return pool.size() - 1;
         }
       } else {
         /* Array */
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
@@ -1018,13 +1061,13 @@ int BinaryExpression::Execute() {
           )
         );
       } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
     } else {
       /* Array */
-      Object *res = new Object(ObjectType::NanObject);
+      Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
     }
@@ -1040,13 +1083,13 @@ int BinaryExpression::Execute() {
           )
         );
       } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
     } else {
       /* Array */
-      Object *res = new Object(ObjectType::NanObject);
+      Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
     }
@@ -1069,13 +1112,13 @@ int BinaryExpression::Execute() {
           )
         );
       } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
     } else {
       /* Array */
-      Object *res = new Object(ObjectType::NanObject);
+      Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
     }
@@ -1091,13 +1134,13 @@ int BinaryExpression::Execute() {
           )
         );
       } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NanObject);
+        Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
       }
     } else {
       /* Array */
-      Object *res = new Object(ObjectType::NanObject);
+      Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
     }
@@ -1107,7 +1150,7 @@ int BinaryExpression::Execute() {
     pool.push_back(res);
     return pool.size() - 1;
   }
-  Object *res = new Object(ObjectType::NanObject);
+  Object *res = new Object(ObjectType::NaNObject);
   pool.push_back(res);
   return pool.size() - 1;
 }
