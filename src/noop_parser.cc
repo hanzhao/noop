@@ -89,7 +89,7 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
       Program
     };
   */
-  if (node == NULL) {
+  if (node == nullptr) {
     _out << "NULL";
     return _out;
   }
@@ -143,6 +143,15 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
   case SyntaxTreeNodeType::VariableStatement:
     _out << "VariableStatementNode { declarations: " <<
     ((VariableStatement*)node)->declarations << " }";
+    break;
+  case SyntaxTreeNodeType::IfStatement:
+    _out << "IfStatementNode { condition: " << ((IfStatement*)node)->condition <<
+    ", consequent: " << ((IfStatement*)node)->consequent << ", alternate: " <<
+    ((IfStatement*)node)->alternate;
+    break;
+  case SyntaxTreeNodeType::BlockStatement:
+    _out << "BlockStatementNode { statements: " <<
+    ((BlockStatement*)node)->statements << " }";
     break;
   case SyntaxTreeNodeType::ExpressionStatement:
     _out << "ExpressionStatement { expression: " <<
@@ -219,6 +228,21 @@ VariableStatement* SyntaxTree::CreateVariableStatement(String kind,
   VariableStatement* node = new VariableStatement();
   node->kind = kind;
   node->declarations = declarations;
+  return node;
+}
+
+BlockStatement* SyntaxTree::CreateBlockStatement(vector<Statement*> statements) {
+  BlockStatement* node = new BlockStatement();
+  node->statements = statements;
+  return node;
+}
+
+IfStatement* SyntaxTree::CreateIfStatement(Expression* expr,
+                                  Statement* consequent, Statement* alternate) {
+  IfStatement* node = new IfStatement();
+  node->condition = expr;
+  node->consequent = consequent;
+  node->alternate = alternate;
   return node;
 }
 
@@ -558,7 +582,7 @@ Token* Parser::Lex() {
 VariableDeclarator* Parser::ParseVariableDeclarator() {
   IdentifierToken* id = (IdentifierToken*)Lex();
   DEBUG << "Parsed var declarator: " << id << ", look ahead" << look_ahead << endl;
-  Expression* init = NULL;
+  Expression* init = nullptr;
   if (IsPunctuation(U"=")) {
     Lex();
     init = ParseAssignmentExpression();
@@ -584,11 +608,27 @@ vector<VariableDeclarator *> Parser::ParseVariableDeclarationList() {
 }
 
 VariableStatement* Parser::ParseVariableStatement() {
-  vector<VariableDeclarator *> declarations;
   GetKeyword(U"var");
+  vector<VariableDeclarator *> declarations;
   declarations = ParseVariableDeclarationList();
   GetSemicolon();
   return delegate.CreateVariableStatement(U"var", declarations);
+}
+
+IfStatement* Parser::ParseIfStatement() {
+  GetKeyword(U"if");
+  assert(IsPunctuation(U"("));
+  Lex();
+  Expression* cond = ParseExpression();
+  assert(IsPunctuation(U")"));
+  Lex();
+  Statement* consequent = ParseStatement();
+  Statement* alternate = nullptr;
+  if (IsKeyword(U"else")) {
+    Lex();
+    alternate = ParseStatement();
+  }
+  return delegate.CreateIfStatement(cond, consequent, alternate);
 }
 
 Expression* Parser::ParsePrimaryExpression() {
@@ -764,20 +804,26 @@ Expression* Parser::ParseExpression() {
 Statement* Parser::ParseStatement() {
   int type = look_ahead->type;
   if (type == TokenType::EndOfSource)
-    return NULL;
+    return nullptr;
   if (type == TokenType::Keyword) {
     String value = ((IdentifierToken *)look_ahead)->name;
     if (value == U"var") {
       return ParseVariableStatement();
+    } else if (value == U"if") {
+      return ParseIfStatement();
+    } else if (value == U"while") {
+    //  return ParseWhileStatement();
+    } else if (value == U"function") {
+    //  return ParseFunctionStatement();
     }
   }
   if (type == TokenType::Punctuator) {
     String value = ((PunctuatorToken *)look_ahead)->value;
     // if (value == ";")
     if (value == U"{") {
-      return ParseBody();
+      return ParseBlockStatement();
     } else if (value == U"}") {
-      return NULL;
+      return nullptr;
     }  else if (value == U"(")
       return delegate.CreateExpressionStatement(ParseExpression());
   }
@@ -787,18 +833,34 @@ Statement* Parser::ParseStatement() {
 }
 
 /*
- * Parse program body or block body
+ * Parse program block
+ */
+BlockStatement* Parser::ParseBlockStatement() {
+  Statement* statement;
+  vector<Statement *> statements;
+  assert(IsPunctuation(U"{"));
+  Lex();
+  while (index < length) {
+    if ((statement = ParseStatement()) != nullptr) {
+      // DEBUG << "Parsed statement type: " << statement->type << endl;
+      statements.push_back(statement);
+    } else {
+      break;
+    }
+  }
+  assert(IsPunctuation(U"}"));
+  Lex();
+  return delegate.CreateBlockStatement(statements);
+}
+
+/*
+ * Parse program body
  */
 Body* Parser::ParseBody() {
   Statement* statement;
   Body* body = new Body();
-  // block ?
-  if (look_ahead->type == TokenType::Punctuator &&
-      ((PunctuatorToken *)look_ahead)->value == U"{") {
-    Lex();
-  }
   while (index < length) {
-    if ((statement = ParseStatement()) != NULL) {
+    if ((statement = ParseStatement()) != nullptr) {
       DEBUG << "Parsed statement type: " << statement->type << endl;
       body->statements.push_back(statement);
     } else {
@@ -815,7 +877,7 @@ Program* Parser::ParseProgram(String code) {
   source = code;
   index = 0;
   length = code.length();
-  look_ahead = NULL;
+  look_ahead = nullptr;
   DEBUG << source << endl;
   Peek();
   SyntaxTreeNode* node = delegate.CreateProgram(ParseBody());
@@ -826,7 +888,7 @@ Program* Parser::ParseProgram(String code) {
 SyntaxTree delegate;
 
 int VariableDeclarator::Execute() {
-  if (init == NULL) {
+  if (init == nullptr) {
     current_context->var_table[id->name] = 0;
   } else {
     current_context->var_table[id->name] = init->Execute();
@@ -877,7 +939,7 @@ int Body::Execute() {
 
 int Program::Execute() {
   current_context = global_context;
-  if (body != NULL) {
+  if (body != nullptr) {
     return body->Execute();
   }
   return 0;

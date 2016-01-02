@@ -8,6 +8,7 @@
 #include <assert.h>
 #include <vector>
 #include <string>
+#include <sstream>
 
 namespace noop {
 
@@ -59,14 +60,14 @@ struct NumericObject: Object {
     return true;
   };
   bool ToString(String& res) {
-    if (value == (int)(value)) {
-      res = Encoding::UTF8ToUTF32(std::to_string((int)(value)));
-    } else {
-      res = Encoding::UTF8ToUTF32(std::to_string(value));
-    }
+    std::string _tmp = "";
+    std::stringstream sio(_tmp);
+    sio.precision(17);
+    sio << value;
+    res = Encoding::UTF8ToUTF32((_tmp));
     return true;
   };
-  NumericObject(double value)
+  NumericObject(Number value)
     : Object(ObjectType::NumericObject),
       value(value) {}
 };

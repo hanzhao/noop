@@ -74,7 +74,9 @@ enum {
   BinaryExpression,
   VariableDeclarator,
   VariableStatement,
+  IfStatement,
   ExpressionStatement,
+  BlockStatement,
   Body,
   Program
 };
@@ -102,14 +104,14 @@ struct Identifier: Expression {
   Identifier() {
     type = SyntaxTreeNodeType::Identifier;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct ThisExpression: Expression {
   ThisExpression() {
     type = SyntaxTreeNodeType::ThisExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct MemberExpression: Expression {
@@ -119,7 +121,7 @@ struct MemberExpression: Expression {
   MemberExpression() {
     type = SyntaxTreeNodeType::MemberExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct CallExpression: Expression {
@@ -128,7 +130,7 @@ struct CallExpression: Expression {
   CallExpression() {
     type = SyntaxTreeNodeType::CallExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct AssignmentExpression: Expression {
@@ -138,7 +140,7 @@ struct AssignmentExpression: Expression {
   AssignmentExpression() {
     type = SyntaxTreeNodeType::AssignmentExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct SequenceExpression: Expression {
@@ -146,7 +148,7 @@ struct SequenceExpression: Expression {
   SequenceExpression() {
     type = SyntaxTreeNodeType::SequenceExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct BinaryExpression: Expression {
@@ -156,7 +158,7 @@ struct BinaryExpression: Expression {
   BinaryExpression() {
     type = SyntaxTreeNodeType::BinaryExpression;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct NumberLiteral: Literal {
@@ -164,7 +166,7 @@ struct NumberLiteral: Literal {
   NumberLiteral() {
     type = SyntaxTreeNodeType::NumberLiteral;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct StringLiteral: Literal {
@@ -172,7 +174,7 @@ struct StringLiteral: Literal {
   StringLiteral() {
     type = SyntaxTreeNodeType::StringLiteral;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct BooleanLiteral: Literal {
@@ -180,14 +182,14 @@ struct BooleanLiteral: Literal {
   BooleanLiteral() {
     type = SyntaxTreeNodeType::BooleanLiteral;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct NullLiteral: Literal {
   NullLiteral() {
     type = SyntaxTreeNodeType::NullLiteral;
   }
-  int Execute();
+  int Execute() override;
 };
 
 /* Just an interface */
@@ -201,7 +203,7 @@ struct VariableDeclarator: SyntaxTreeNode {
   VariableDeclarator() {
     type = SyntaxTreeNodeType::VariableDeclarator;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct VariableStatement: Statement {
@@ -210,7 +212,7 @@ struct VariableStatement: Statement {
   VariableStatement() {
     type = SyntaxTreeNodeType::VariableStatement;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct ExpressionStatement: Statement {
@@ -218,7 +220,29 @@ struct ExpressionStatement: Statement {
   ExpressionStatement() {
     type = SyntaxTreeNodeType::ExpressionStatement;
   }
-  int Execute();
+  int Execute() override;
+};
+
+struct BlockStatement: Statement {
+  std::vector<Statement*> statements;
+  BlockStatement() {
+    type = SyntaxTreeNodeType::BlockStatement;
+  }
+  int Execute() override {
+    
+  }
+};
+
+struct IfStatement: Statement {
+  Expression* condition;
+  Statement* consequent;
+  Statement* alternate;
+  IfStatement() {
+    type = SyntaxTreeNodeType::IfStatement;
+  }
+  int Execute() override {
+    return 0;
+  }
 };
 
 struct Body: Statement {
@@ -226,7 +250,7 @@ struct Body: Statement {
   Body() {
     type = SyntaxTreeNodeType::Body;
   }
-  int Execute();
+  int Execute() override;
 };
 
 struct Program: SyntaxTreeNode {
@@ -234,7 +258,7 @@ struct Program: SyntaxTreeNode {
   Program() {
     type = SyntaxTreeNodeType::Program;
   }
-  int Execute();
+  int Execute() override;
 };
 
 /* SyntaxTreeResolver */
@@ -243,15 +267,21 @@ public:
   Literal* CreateLiteral(Token* token);
   Identifier* CreateIdentifier(Token* token);
   ThisExpression* CreateThisExpression();
-  MemberExpression* CreateMemberExpression(String op, Expression* expr, Expression* property);
+  MemberExpression* CreateMemberExpression(String op, Expression* expr,
+                                                      Expression* property);
   CallExpression* CreateCallExpression(Expression* expr, std::vector<Expression*> args);
-  AssignmentExpression* CreateAssignmentExpression(String op, Expression* left, Expression* right);
+  AssignmentExpression* CreateAssignmentExpression(String op, Expression* left,
+                                                              Expression* right);
   SequenceExpression* CreateSequenceExpression(std::vector<Expression*> expressions);
-  BinaryExpression* CreateBinaryExpression(String op, Expression* left, Expression* right);
+  BinaryExpression* CreateBinaryExpression(String op, Expression* left,
+                                                      Expression* right);
   VariableDeclarator* CreateVariableDeclarator(IdentifierToken* id,
                                                Expression* init);
   VariableStatement* CreateVariableStatement(String kind,
                               std::vector<VariableDeclarator*> declarations);
+  IfStatement* CreateIfStatement(Expression* expr, Statement* consequent,
+                                                   Statement* alternate);
+  BlockStatement* CreateBlockStatement(std::vector<Statement*> statements);
   ExpressionStatement* CreateExpressionStatement(Expression* expr);
   Program* CreateProgram(Body* body);
 };
@@ -287,6 +317,9 @@ public:
   Expression* ParseExpression();
   std::vector<VariableDeclarator*> ParseVariableDeclarationList();
   VariableStatement* ParseVariableStatement();
+  BlockStatement* ParseBlock();
+  IfStatement* ParseIfStatement();
+  BlockStatement* ParseBlockStatement();
   Statement* ParseStatement();
   Body* ParseBody();
   Program* ParseProgram(String code);
