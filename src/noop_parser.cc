@@ -1441,6 +1441,13 @@ int BlockStatement::Execute() {
   return 0;
 }
 
+int WhileStatement::Execute() {
+  while (!IsFalse(test->Execute())) {
+    body->Execute();
+  }
+  return 0;
+}
+
 int NumericLiteral::Execute() {
   Object *res = new NumericObject(value);
   pool.push_back(res);
@@ -1468,7 +1475,6 @@ int NullLiteral::Execute() {
 
 int IfStatement::Execute() {
   if (!IsFalse(condition->Execute())) {
-
     return consequent->Execute();
   } else {
     return alternate->Execute();

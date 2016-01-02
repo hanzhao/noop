@@ -249,9 +249,7 @@ struct WhileStatement: Statement {
   WhileStatement() {
     type = SyntaxTreeNodeType::WhileStatement;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct FunctionExpression: Expression {
