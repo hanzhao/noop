@@ -828,7 +828,11 @@ SyntaxTree delegate;
 int VariableDeclarator::Execute() {
   if (init == NULL) {
     current_context->var_table[id->name] = 0;
-  };
+  } else {
+    current_context->var_table[id->name] = init->Execute();
+    DEBUG << id->name << " is set to " <<
+             pool[current_context->var_table[id->name]] << endl;
+  }
   return 0;
 }
 
