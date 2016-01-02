@@ -3,6 +3,7 @@
 #include <noop_type.h>
 #include <noop_context.h>
 #include <noop_pool.h>
+#include <noop.h>
 
 #include <stdexcept>
 #include <sstream>
@@ -908,73 +909,30 @@ int BinaryExpression::Execute() {
   int left_pos = left->Execute();
   int right_pos = right->Execute();
   if (_operator == U"+") {
-    if (pool[left_pos]->type == pool[right_pos]->type) {
-      /* number + number */
-      if (pool[left_pos]->type == ObjectType::NumericObject) {
-        Object *res = new NumericObject(
-          ((NumericObject*)pool[left_pos])->value + \
-          ((NumericObject*)pool[right_pos])->value
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
-      } else if (pool[left_pos]->type == ObjectType::StringObject) {
-        Object *res = new StringObject(
-          ((StringObject*)pool[left_pos])->value + \
-          ((StringObject*)pool[right_pos])->value
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
-      } else {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
         Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
-      }
-    } else {
-      double left_value, right_value;
-      if (pool[left_pos]->type == ObjectType::NumericObject) {
-        /* Number */
-        left_value = ((NumericObject*)pool[left_pos])->value;
-      } else if (pool[left_pos]->type == ObjectType::StringObject) {
-        /* String */
-        try {
-          left_value = stod(
-            Encoding::UTF32ToUTF8(
-              ((StringObject*)pool[left_pos])->value
-            )
-          );
-        } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NaNObject);
-          pool.push_back(res);
-          return pool.size() - 1;
-        }
-      } else {
-        /* Array */
+      };
+      Object *res = new StringObject(
+        left_value + right_value
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+    if (pool[left_pos]->type == ObjectType::NumericObject ||
+        pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
         Object *res = new Object(ObjectType::NaNObject);
         pool.push_back(res);
         return pool.size() - 1;
-      }
-      if (pool[right_pos]->type == ObjectType::NumericObject) {
-        /* Number */
-        right_value = ((NumericObject*)pool[right_pos])->value;
-      } else if (pool[right_pos]->type == ObjectType::StringObject) {
-        /* String */
-        try {
-          right_value = stod(
-            Encoding::UTF32ToUTF8(
-              ((StringObject*)pool[right_pos])->value
-            )
-          );
-        } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NaNObject);
-          pool.push_back(res);
-          return pool.size() - 1;
-        }
-      } else {
-        /* Array */
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
+      };
       Object *res = new NumericObject(
         left_value + right_value
       );
@@ -982,169 +940,39 @@ int BinaryExpression::Execute() {
       return pool.size() - 1;
     }
   } else if (_operator == U"-") {
-    if (pool[left_pos]->type == pool[right_pos]->type) {
-      /* number - number */
-      if (pool[left_pos]->type == ObjectType::NumericObject) {
-        Object *res = new NumericObject(
-          ((NumericObject*)pool[left_pos])->value - \
-          ((NumericObject*)pool[right_pos])->value
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
-      } else {
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-    } else {
-      double left_value, right_value;
-      if (pool[left_pos]->type == ObjectType::NumericObject) {
-        /* Number */
-        left_value = ((NumericObject*)pool[left_pos])->value;
-      } else if (pool[left_pos]->type == ObjectType::StringObject) {
-        /* String */
-        try {
-          left_value = stod(
-            Encoding::UTF32ToUTF8(
-              ((StringObject*)pool[left_pos])->value
-            )
-          );
-        } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NaNObject);
-          pool.push_back(res);
-          return pool.size() - 1;
-        }
-      } else {
-        /* Array */
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-      if (pool[right_pos]->type == ObjectType::NumericObject) {
-        /* Number */
-        right_value = ((NumericObject*)pool[right_pos])->value;
-      } else if (pool[right_pos]->type == ObjectType::StringObject) {
-        /* String */
-        try {
-          right_value = stod(
-            Encoding::UTF32ToUTF8(
-              ((StringObject*)pool[right_pos])->value
-            )
-          );
-        } catch (const invalid_argument& ia) {
-          Object *res = new Object(ObjectType::NaNObject);
-          pool.push_back(res);
-          return pool.size() - 1;
-        }
-      } else {
-        /* Array */
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-      Object *res = new NumericObject(
-        left_value - right_value
-      );
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
-    }
+    };
+    Object *res = new NumericObject(
+      left_value - right_value
+    );
+    pool.push_back(res);
+    return pool.size() - 1;
   } else if (_operator == U"*") {
-    double left_value, right_value;
-    if (pool[left_pos]->type == ObjectType::NumericObject) {
-      /* Number */
-      left_value = ((NumericObject*)pool[left_pos])->value;
-    } else if (pool[left_pos]->type == ObjectType::StringObject) {
-      /* String */
-      try {
-        left_value = stod(
-          Encoding::UTF32ToUTF8(
-            ((StringObject*)pool[left_pos])->value
-          )
-        );
-      } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-    } else {
-      /* Array */
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
       Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
-    }
-    if (pool[right_pos]->type == ObjectType::NumericObject) {
-      /* Number */
-      right_value = ((NumericObject*)pool[right_pos])->value;
-    } else if (pool[right_pos]->type == ObjectType::StringObject) {
-      /* String */
-      try {
-        right_value = stod(
-          Encoding::UTF32ToUTF8(
-            ((StringObject*)pool[right_pos])->value
-          )
-        );
-      } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-    } else {
-      /* Array */
-      Object *res = new Object(ObjectType::NaNObject);
-      pool.push_back(res);
-      return pool.size() - 1;
-    }
+    };
     Object *res = new NumericObject(
       left_value * right_value
     );
     pool.push_back(res);
     return pool.size() - 1;
   } else if (_operator == U"/") {
-    double left_value, right_value;
-    if (pool[left_pos]->type == ObjectType::NumericObject) {
-      /* Number */
-      left_value = ((NumericObject*)pool[left_pos])->value;
-    } else if (pool[left_pos]->type == ObjectType::StringObject) {
-      /* String */
-      try {
-        left_value = stod(
-          Encoding::UTF32ToUTF8(
-            ((StringObject*)pool[left_pos])->value
-          )
-        );
-      } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-    } else {
-      /* Array */
+    Number left_value, right_value;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
       Object *res = new Object(ObjectType::NaNObject);
       pool.push_back(res);
       return pool.size() - 1;
-    }
-    if (pool[right_pos]->type == ObjectType::NumericObject) {
-      /* Number */
-      right_value = ((NumericObject*)pool[right_pos])->value;
-    } else if (pool[right_pos]->type == ObjectType::StringObject) {
-      /* String */
-      try {
-        right_value = stod(
-          Encoding::UTF32ToUTF8(
-            ((StringObject*)pool[right_pos])->value
-          )
-        );
-      } catch (const invalid_argument& ia) {
-        Object *res = new Object(ObjectType::NaNObject);
-        pool.push_back(res);
-        return pool.size() - 1;
-      }
-    } else {
-      /* Array */
-      Object *res = new Object(ObjectType::NaNObject);
-      pool.push_back(res);
-      return pool.size() - 1;
-    }
+    };
     Object *res = new NumericObject(
       left_value / right_value
     );
