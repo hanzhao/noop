@@ -16,7 +16,7 @@ enum {
   Identifier,
   BooleanLiteral,
   NullLiteral,
-  NumberLiteral,
+  NumericLiteral,
   StringLiteral,
   Punctuator
 };
@@ -64,7 +64,7 @@ enum {
   NullLiteral,
   BooleanLiteral,
   StringLiteral,
-  NumberLiteral,
+  NumericLiteral,
   Identifier,
   ThisExpression,
   MemberExpression,
@@ -72,6 +72,7 @@ enum {
   AssignmentExpression,
   SequenceExpression,
   BinaryExpression,
+  FunctionExpression,
   VariableDeclarator,
   VariableStatement,
   IfStatement,
@@ -162,10 +163,10 @@ struct BinaryExpression: Expression {
   int Execute() override;
 };
 
-struct NumberLiteral: Literal {
+struct NumericLiteral: Literal {
   Number value;
-  NumberLiteral() {
-    type = SyntaxTreeNodeType::NumberLiteral;
+  NumericLiteral() {
+    type = SyntaxTreeNodeType::NumericLiteral;
   }
   int Execute() override;
 };
@@ -199,7 +200,7 @@ struct Statement: SyntaxTreeNode {
 };
 
 struct VariableDeclarator: SyntaxTreeNode {
-  IdentifierToken* id;
+  Identifier* id;
   Expression* init;
   VariableDeclarator() {
     type = SyntaxTreeNodeType::VariableDeclarator;
@@ -230,7 +231,7 @@ struct BlockStatement: Statement {
     type = SyntaxTreeNodeType::BlockStatement;
   }
   int Execute() override {
-
+    return 0;
   }
 };
 
@@ -251,6 +252,18 @@ struct WhileStatement: Statement {
   Statement* body;
   WhileStatement() {
     type = SyntaxTreeNodeType::WhileStatement;
+  }
+  int Execute() override {
+    return 0;
+  }
+};
+
+struct FunctionExpression: Expression {
+  Identifier* id;
+  std::vector<Expression*> params;
+  Statement* body;
+  FunctionExpression() {
+    type = SyntaxTreeNodeType::FunctionExpression;
   }
   int Execute() override {
     return 0;
@@ -287,7 +300,9 @@ public:
   SequenceExpression* CreateSequenceExpression(std::vector<Expression*> expressions);
   BinaryExpression* CreateBinaryExpression(String op, Expression* left,
                                                       Expression* right);
-  VariableDeclarator* CreateVariableDeclarator(IdentifierToken* id,
+  FunctionExpression* CreateFunctionExpression(Identifier* id,
+                              std::vector<Expression*> params, Statement* body);
+  VariableDeclarator* CreateVariableDeclarator(Identifier* id,
                                                Expression* init);
   VariableStatement* CreateVariableStatement(String kind,
                               std::vector<VariableDeclarator*> declarations);
@@ -327,6 +342,7 @@ public:
   Expression* ParsePostfixExpression();
   Expression* ParseBinaryExpression();
   Expression* ParseAssignmentExpression();
+  Expression* ParseFunctionExpression();
   Expression* ParseExpression();
   std::vector<VariableDeclarator*> ParseVariableDeclarationList();
   VariableStatement* ParseVariableStatement();

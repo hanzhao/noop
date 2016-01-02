@@ -26,7 +26,7 @@ ostream& operator <<(ostream& _out, Token* token) {
     Identifier,
     BooleanLiteral,
     NullLiteral,
-    NumberLiteral,
+    NumericLiteral,
     StringLiteral,
     Punctuator
   */
@@ -49,11 +49,19 @@ ostream& operator <<(ostream& _out, Token* token) {
     ((PunctuatorToken *)token)->value << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
-  case TokenType::NumberLiteral:
-    _out << "NumberLiteral { value: " <<
+  case TokenType::NullLiteral:
+    _out << "NullLiteral { start: " << token->start
+    << ", end: " << token->end << " }";
+    break;
+  case TokenType::NumericLiteral:
+    _out << "NumericLiteral { value: " <<
     ((NumericLiteralToken *)token)->value << ", start: " << token->start
     << ", end: " << token->end << " }";
     break;
+  case TokenType::StringLiteral:
+    _out << "StringLiteral { value: " <<
+    ((StringLiteralToken *)token)->value << ", start: " << token->start
+    << ", end: " << token->end << " }";
   default:
     _out << "~Token { }";
     break;
@@ -79,7 +87,7 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
       NullLiteral,
       BooleanLiteral,
       StringLiteral,
-      NumberLiteral,
+      NumericLiteral,
       Identifier,
       ThisExpression,
       MemberExpression,
@@ -87,6 +95,7 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
       AssignmentExpression,
       SequenceExpression,
       BinaryExpression,
+      FunctionExpression,
       VariableDeclarator,
       VariableStatement,
       IfStatement,
@@ -113,8 +122,8 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
     _out << "StringLiteralNode { value: " << ((StringLiteral*)node)->value <<
     " }";
     break;
-  case SyntaxTreeNodeType::NumberLiteral:
-    _out << "NumberLiteralNode { value: " << ((NumberLiteral*)node)->value <<
+  case SyntaxTreeNodeType::NumericLiteral:
+    _out << "NumericLiteralNode { value: " << ((NumericLiteral*)node)->value <<
     " }";
     break;
   case SyntaxTreeNodeType::Identifier:
@@ -131,7 +140,12 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
     break;
   case SyntaxTreeNodeType::CallExpression:
     _out << "CallExpressionNode { callee: " << ((CallExpression*)node)->callee <<
-    ", arguments: " << ((CallExpression*)node)->arguments << "} ";
+    ", arguments: " << ((CallExpression*)node)->arguments << " }";
+    break;
+  case SyntaxTreeNodeType::FunctionExpression:
+    _out << "FunctionExpressionNode { name: " << ((FunctionExpression*)node)->id <<
+    ", params: " << ((FunctionExpression*)node)->params << ", body: " <<
+    ((FunctionExpression*)node)->body << " }";
     break;
   case SyntaxTreeNodeType::AssignmentExpression:
     _out << "AssignmentExpressionNode { left: " << ((AssignmentExpression*)node)->left <<
@@ -227,7 +241,7 @@ ostream& operator <<(ostream& _out, Object* obj) {
 }
 
 /* Syntax Tree Resolver */
-VariableDeclarator* SyntaxTree::CreateVariableDeclarator(IdentifierToken* id,
+VariableDeclarator* SyntaxTree::CreateVariableDeclarator(Identifier* id,
                                                          Expression* init) {
   VariableDeclarator* node = new VariableDeclarator();
   node->id = id;
@@ -303,6 +317,15 @@ CallExpression* SyntaxTree::CreateCallExpression(Expression* expr, vector<Expres
   return node;
 }
 
+FunctionExpression* SyntaxTree::CreateFunctionExpression(Identifier* id,
+                             vector<Expression*> params, Statement* body) {
+  FunctionExpression* node = new FunctionExpression();
+  node->id = id;
+  node->params = params;
+  node->body = body;
+  return node;
+}
+
 BinaryExpression* SyntaxTree::CreateBinaryExpression(String op,
                                           Expression* left, Expression* right) {
   BinaryExpression* node = new BinaryExpression();
@@ -319,8 +342,8 @@ Program* SyntaxTree::CreateProgram(Body* body) {
 }
 
 Literal* SyntaxTree::CreateLiteral(Token* token) {
-  if (token->type == TokenType::NumberLiteral) {
-    NumberLiteral* node = new NumberLiteral();
+  if (token->type == TokenType::NumericLiteral) {
+    NumericLiteral* node = new NumericLiteral();
     node->value = ((NumericLiteralToken*)token)->value;
     return node;
   } else if (token->type == TokenType::NullLiteral) {
@@ -477,7 +500,7 @@ NumericLiteralToken* Parser::GetNumericLiteral() {
     }
     str += c;
   }
-  NumericLiteralToken* token = new NumericLiteralToken(TokenType::NumberLiteral,
+  NumericLiteralToken* token = new NumericLiteralToken(TokenType::NumericLiteral,
                                                        start, index);
   stringstream(Encoding::UTF32ToUTF8(str)) >> token->value;
   return token;
@@ -609,7 +632,7 @@ VariableDeclarator* Parser::ParseVariableDeclarator() {
     Lex();
     init = ParseAssignmentExpression();
   }
-  return delegate.CreateVariableDeclarator(id, init);
+  return delegate.CreateVariableDeclarator(delegate.CreateIdentifier(id), init);
 }
 
 vector<VariableDeclarator *> Parser::ParseVariableDeclarationList() {
@@ -664,12 +687,27 @@ WhileStatement* Parser::ParseWhileStatement() {
   return delegate.CreateWhileStatement(test, body);
 }
 
+Expression* Parser::ParseFunctionExpression() {
+  GetKeyword(U"function");
+  Identifier* id = nullptr;
+  if (IsIdentifierName(look_ahead)) {
+    id = delegate.CreateIdentifier(Lex());
+  }
+  assert(IsPunctuation(U"("));
+  Lex(); // (
+  vector<Expression*> params = ParseArguments();
+  assert(IsPunctuation(U")"));
+  Lex(); // )
+  BlockStatement* body = ParseBlockStatement();
+  return delegate.CreateFunctionExpression(id, params, body);
+}
+
 Expression* Parser::ParsePrimaryExpression() {
   int type = look_ahead->type;
   if (type == TokenType::Identifier) {
     return delegate.CreateIdentifier(Lex());
   }
-  if (type == TokenType::StringLiteral || type == TokenType::NumberLiteral ||
+  if (type == TokenType::StringLiteral || type == TokenType::NumericLiteral ||
       type == TokenType::BooleanLiteral || type == TokenType::NullLiteral) {
     return delegate.CreateLiteral(Lex());
   }
@@ -678,8 +716,7 @@ Expression* Parser::ParsePrimaryExpression() {
       Lex();
       return delegate.CreateThisExpression();
     } else if (IsKeyword(U"function")) {
-      /* TODO */
-      // return ParseFunctionExpression();
+      return ParseFunctionExpression();
     }
   }
   throw runtime_error("Parse primary expression: unknown token.");
@@ -699,13 +736,13 @@ Expression* Parser::ParseComputedProperty() {
 
 vector<Expression*> Parser::ParseArguments() {
   vector<Expression*> args;
-  Token* token;
   while (index < length && !IsPunctuation(U")")) {
     args.push_back(ParseAssignmentExpression());
     if (IsPunctuation(U")")) {
       break;
     }
     assert(IsPunctuation(U","));
+    Lex();
   }
   return args;
 }
@@ -847,8 +884,6 @@ Statement* Parser::ParseStatement() {
       return ParseIfStatement();
     } else if (value == U"while") {
       return ParseWhileStatement();
-    } else if (value == U"function") {
-    //  return ParseFunctionStatement();
     }
   }
   if (type == TokenType::Punctuator) {
@@ -1084,7 +1119,7 @@ int BinaryExpression::Execute() {
   return pool.size() - 1;
 }
 
-int NumberLiteral::Execute() {
+int NumericLiteral::Execute() {
   Object *res = new NumericObject(value);
   pool.push_back(res);
   return pool.size() - 1;
