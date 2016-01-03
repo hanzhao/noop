@@ -62,6 +62,19 @@ struct Object {
   size_t JumpToProperty(String pro);
 };
 
+struct UndefinedObject: Object {
+  bool ToNumber(Number& res) override {
+    // Suppress warning
+    if (false) { res = 0; }
+    return false;
+  }
+  bool ToString(String& res) override {
+    res = U"undefined";
+    return true;
+  }
+  UndefinedObject(): Object(ObjectType::UndefinedObject) { }
+};
+
 struct StringObject: Object {
   String value;
   bool ToNumber(Number& res) override {

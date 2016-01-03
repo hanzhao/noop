@@ -5,6 +5,7 @@
 #include <noop.h>
 #include <noop_io.h>
 #include <noop_pool.h>
+#include <noop_parser.h>
 
 using namespace std;
 
@@ -35,13 +36,14 @@ int ConsoleRead(const std::vector<Object*> args) {
 }
 
 int ParseFloat(const std::vector<Object*> args) {
-  if (args.size() == 0) {
+  String str = U"";
+  if (args.size() == 0 || !(args[0]->ToString(str))) {
     NaNObject* nan = new NaNObject();
     pool.push_back(nan);
     return pool.size() - 1;
   }
   Number num;
-  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)args[0])->value));
+  stringstream sin(Encoding::UTF32ToUTF8(str));
   sin >> num;
   NumericObject* obj = new NumericObject(num);
   pool.push_back(obj);
@@ -49,17 +51,27 @@ int ParseFloat(const std::vector<Object*> args) {
 }
 
 int ParseInt(const std::vector<Object*> args) {
-  if (args.size() == 0) {
+  String str = U"";
+  if (args.size() == 0 || !(args[0]->ToString(str))) {
     NaNObject* nan = new NaNObject();
     pool.push_back(nan);
     return pool.size() - 1;
   }
   Number num;
-  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)args[0])->value));
+  stringstream sin(Encoding::UTF32ToUTF8(str));
   sin >> num;
   NumericObject* obj = new NumericObject((Number)((long long)num));
   pool.push_back(obj);
   return pool.size() - 1;
+}
+
+int Eval(const std::vector<Object*> args) {
+  if (args.size() == 0) return 0;
+  String code = U"";
+  if (args[0]->ToString(code)) {
+    return Parser().ParseProgram(code)->Execute();
+  } else
+    return 0;
 }
 
 } // namespace Binding

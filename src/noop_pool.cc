@@ -23,7 +23,7 @@ size_t Object::JumpToProperty(String pro) {
 void* pool_head;
 Pool pool;
 void PoolInit(Pool& pool, Context* global) {
-  Object* undefined_obj = new Object(ObjectType::UndefinedObject);
+  Object* undefined_obj = new UndefinedObject();
   pool.push_back(undefined_obj);
   /* console.log */
   Object* console = new Object(ObjectType::Object);
@@ -43,6 +43,10 @@ void PoolInit(Pool& pool, Context* global) {
   Object* parse_int = new NativeFunctionObject(U"parseInt", Bindings::ParseInt);
   pool.push_back(parse_int);
   global->var_table[U"parseInt"] = pool.size() - 1;
+  /* eval */
+  Object* eval = new NativeFunctionObject(U"eval", Bindings::Eval);
+  pool.push_back(eval);
+  global->var_table[U"eval"] = pool.size() - 1;
   return;
 }
 } // noop

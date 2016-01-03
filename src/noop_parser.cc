@@ -1031,20 +1031,32 @@ int ExpressionStatement::Execute() {
 }
 
 int Body::Execute() {
+  int ret;
   current_context = new Context(current_context);
+  DEBUG << "Body Execute: switching context " << current_context->father <<
+    " to " << current_context << endl;
   for (auto& statement: statements) {
-    statement->Execute();
+    ret = statement->Execute();
   }
+  DEBUG << "Body Execute end: switching context " << current_context <<
+    " to " << current_context->father << endl;
   current_context = current_context->father;
-  return 0;
+  return ret;
 }
 
 int Program::Execute() {
+  DEBUG << "Program Execute: switching context " << current_context <<
+    " to [global]" << global_context << endl;
+  Context* old_context = current_context;
   current_context = global_context;
+  int ret = 0;
   if (body != nullptr) {
-    return body->Execute();
+    ret = body->Execute();
   }
-  return 0;
+  current_context = old_context;
+  DEBUG << "Program Execute end: switching context [global]" << current_context <<
+    " to " << old_context << endl;
+  return ret;
 }
 int Identifier::Execute() {
   return current_context->LookUp(name);
@@ -1068,12 +1080,13 @@ int MemberExpression::Execute() {
 
 int CallExpression::Execute() {
   int callee_pos = callee->Execute(), ret = 0;
+  Context* old_context = current_context;
   current_context = new Context(current_context);
-  DEBUG << "Function call: switching context " << current_context->father <<
+  DEBUG << "Function call: switching context " << old_context <<
     " to " << current_context << endl;
   /* Special NativeFunctionObject */
   if (pool[callee_pos]->type == ObjectType::NativeFunctionObject) {
-    DEBUG << "Call native function" << endl;
+    DEBUG << "Call native function: " << ((NativeFunctionObject*)pool[callee_pos])->name << endl;
     vector<Object*> args;
     for (auto& arg: arguments) {
       args.push_back(pool[arg->Execute()]);
@@ -1083,7 +1096,7 @@ int CallExpression::Execute() {
     std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
     for (size_t i = 0; i < params.size(); ++i) {
       if (i >= arguments.size()) {
-        Object *res = new Object(ObjectType::UndefinedObject);
+        Object *res = new UndefinedObject();
         pool.push_back(res);
         current_context->var_table[params[i]] = pool.size() - 1;
       } else {
@@ -1095,8 +1108,8 @@ int CallExpression::Execute() {
     throw runtime_error("Callee is not a function");
   }
   DEBUG << "Function call end: switching context " << current_context <<
-    " to " << current_context->father << endl;
-  current_context = current_context->father;
+    " to " << old_context << endl;
+  current_context = old_context;
   return ret;
 }
 
@@ -1124,6 +1137,7 @@ int AssignmentExpression::Execute() {
 }
 
 int SequenceExpression::Execute() {
+  /* TODO */
   return 0;
 }
 
@@ -1484,10 +1498,14 @@ int BlockStatement::Execute() {
 }
 
 int WhileStatement::Execute() {
+  int ret = 0;
   while (!IsFalse(test->Execute())) {
     body->Execute();
+    ret += 1;
   }
-  return 0;
+  NumericObject* num = new NumericObject(ret);
+  pool.push_back(num);
+  return pool.size() - 1;
 }
 
 int NumericLiteral::Execute() {
