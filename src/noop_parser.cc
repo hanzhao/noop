@@ -15,7 +15,7 @@ using namespace std;
 /* LL(1) parser for simplified JavaScript. */
 
 namespace noop {
-Context* current_context;
+Context* current_context = global_context;
 
 /* I/O Helper */
 
@@ -1011,16 +1011,6 @@ int Body::Execute() {
   for (auto& statement: statements) {
     statement->Execute();
   }
-  /*
-  DEBUG << ((NumericObject*)pool[current_context->var_table[U"a"]])->value << endl;
-  DEBUG << pool[current_context->var_table[U"b"]]->value << endl;
-  DEBUG << pool[current_context->var_table[U"c"]]->value << endl;
-  DEBUG << pool[current_context->var_table[U"d"]]->value << endl;
-  DEBUG << pool[current_context->var_table[U"e"]]->value << endl;
-  DEBUG << pool[current_context->var_table[U"f"]]->value << endl;
-  */
-  // DEBUG << pool[pool.size() - 1]->type << " vs " << ObjectType::NaNObject << endl;
-  // DEBUG << ((NumericObject*)pool[pool.size() - 1])->value << endl;
   return 0;
 }
 
@@ -1032,11 +1022,8 @@ int Program::Execute() {
   return 0;
 }
 int Identifier::Execute() {
-  if (current_context->var_table.find(name) != current_context->var_table.end()) {
-    return current_context->var_table[name];
-  } else {
-    return 0;
-  }
+  DEBUG << name << endl;
+  return current_context->LookUp(name);
 }
 
 int ThisExpression::Execute() {
@@ -1045,8 +1032,9 @@ int ThisExpression::Execute() {
 
 int MemberExpression::Execute() {
   size_t res = 0;
+  DEBUG << ((Identifier*)left)->name << endl;
   if(left->type == SyntaxTreeNodeType::Identifier)
-    res = current_context->var_table[((Identifier*)left)->name];
+    res = current_context->LookUp(((Identifier*)left)->name);
   else if (left->type == SyntaxTreeNodeType::MemberExpression) {
     res = left->Execute();
   }
@@ -1498,9 +1486,17 @@ int FunctionExpression::Execute() {
   if (id != NULL) {
     current_context->var_table[id->name] = pool.size() - 1;
     DEBUG << id->name << " is set to " <<
-             pool[current_context->var_table[id->name]] << endl;
+             pool[current_context->LookUp(id->name)] << endl;
   }
   return pool.size() - 1;
 }
+
+int PrintStatement::Execute() {
+  String res;
+  pool[current_context->LookUp(U"data")]->ToString(res);
+  DEBUG << res << endl;
+  return 0;
+}
+
 
 } // namespace noop

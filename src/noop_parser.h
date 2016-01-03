@@ -79,6 +79,7 @@ enum {
   WhileStatement,
   ExpressionStatement,
   BlockStatement,
+  PrintStatement,
   Body,
   Program
 };
@@ -248,6 +249,13 @@ struct WhileStatement: Statement {
   Statement* body;
   WhileStatement() {
     type = SyntaxTreeNodeType::WhileStatement;
+  }
+  int Execute() override;
+};
+
+struct PrintStatement: Statement {
+  PrintStatement() {
+    type = SyntaxTreeNodeType::PrintStatement;
   }
   int Execute() override;
 };
