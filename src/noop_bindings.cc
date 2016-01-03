@@ -34,18 +34,28 @@ int ConsoleRead(const std::vector<Object*> args) {
   return pool.size() - 1;
 }
 
-int ParseFloat(int index) {
+int ParseFloat(const std::vector<Object*> args) {
+  if (args.size() == 0) {
+    NaNObject* nan = new NaNObject();
+    pool.push_back(nan);
+    return pool.size() - 1;
+  }
   Number num;
-  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)pool[index])->value));
+  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)args[0])->value));
   sin >> num;
   NumericObject* obj = new NumericObject(num);
   pool.push_back(obj);
   return pool.size() - 1;
 }
 
-int ParseInt(int index) {
+int ParseInt(const std::vector<Object*> args) {
+  if (args.size() == 0) {
+    NaNObject* nan = new NaNObject();
+    pool.push_back(nan);
+    return pool.size() - 1;
+  }
   Number num;
-  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)pool[index])->value));
+  stringstream sin(Encoding::UTF32ToUTF8(((StringObject*)args[0])->value));
   sin >> num;
   NumericObject* obj = new NumericObject((Number)((long long)num));
   pool.push_back(obj);

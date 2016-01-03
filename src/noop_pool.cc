@@ -35,6 +35,14 @@ void PoolInit(Pool& pool, Context* global) {
   console->properties[U"read"] = pool.size() - 1;
   pool.push_back(console);
   global->var_table[U"console"] = pool.size() - 1;
+  /* parseFloat */
+  Object* parse_float = new NativeFunctionObject(U"parseFloat", Bindings::ParseFloat);
+  pool.push_back(parse_float);
+  global->var_table[U"parseFloat"] = pool.size() - 1;
+  /* parseInt */
+  Object* parse_int = new NativeFunctionObject(U"parseInt", Bindings::ParseInt);
+  pool.push_back(parse_int);
+  global->var_table[U"parseInt"] = pool.size() - 1;
   return;
 }
 } // noop

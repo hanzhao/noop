@@ -1535,12 +1535,4 @@ int FunctionExpression::Execute() {
   return pool.size() - 1;
 }
 
-int PrintStatement::Execute() {
-  String res;
-  pool[current_context->LookUp(U"data")]->ToString(res);
-  STDOUT << res << endl;
-  return 0;
-}
-
-
 } // namespace noop
