@@ -1265,7 +1265,11 @@ int BinaryExpression::Execute() {
       return left_pos;
     }
   } else if (_operator == U"==") {
-    if (pool[left_pos]->type == ObjectType::StringObject ||
+    if (left_pos == right_pos) {
+      Object *res = new BooleanObject(true);
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::StringObject ||
         pool[right_pos]->type == ObjectType::StringObject) {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
@@ -1295,7 +1299,11 @@ int BinaryExpression::Execute() {
       return pool.size() - 1;
     }
   } else if (_operator == U"!=") {
-    if (pool[left_pos]->type == ObjectType::StringObject ||
+    if (left_pos == right_pos) {
+      Object *res = new BooleanObject(false);
+      pool.push_back(res);
+      return pool.size() - 1;
+    } else if (pool[left_pos]->type == ObjectType::StringObject ||
         pool[right_pos]->type == ObjectType::StringObject) {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
