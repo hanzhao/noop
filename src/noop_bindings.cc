@@ -24,7 +24,9 @@ int ConsoleLog(const std::vector<Object*> args) {
   return 0;
 }
 
-int Readline() {
+int ConsoleRead(const std::vector<Object*> args) {
+  // Suppress unused warning
+  if (false) { args.size(); }
   string input;
   getline(cin, input);
   StringObject* obj = new StringObject(Encoding::UTF8ToUTF32(input));

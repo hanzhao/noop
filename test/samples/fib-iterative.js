@@ -5,4 +5,4 @@ while (i < 10) {
   b = c;
   i = i + 1;
 }
-console.log('The 10th num of fibnacci is: ' + c);
+console.log('The 10th num of fibnacci is: ', c);

@@ -8,9 +8,9 @@
 namespace noop {
 namespace Bindings {
 
-int Readline();
 int ParseFloat(int ObjectIndex);
 int ConsoleLog(const std::vector<Object*> args);
+int ConsoleRead(const std::vector<Object*> args);
 
 }
 }

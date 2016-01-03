@@ -16,7 +16,7 @@ It's a simplified JavaScript interpreter, as our **Principles of Programming Lan
   - \> \>= < <= == != ===
   - && || !
 + I/O
-  - readline
+  - console.read
   - console.log
 + Conditional statement
   - if ... else ...

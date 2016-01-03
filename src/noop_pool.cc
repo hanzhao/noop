@@ -28,8 +28,11 @@ void PoolInit(Pool& pool, Context* global) {
   /* console.log */
   Object* console = new Object(ObjectType::Object);
   Object* console_log = new NativeFunctionObject(U"log", Bindings::ConsoleLog);
+  Object* console_read = new NativeFunctionObject(U"read", Bindings::ConsoleRead);
   pool.push_back(console_log);
   console->properties[U"log"] = pool.size() - 1;
+  pool.push_back(console_read);
+  console->properties[U"read"] = pool.size() - 1;
   pool.push_back(console);
   global->var_table[U"console"] = pool.size() - 1;
   return;
