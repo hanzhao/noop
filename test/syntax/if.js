@@ -5,3 +5,4 @@ if (x == y && y == z) {
   var c = 3;
 } else
   var c = 4;
+console.log(x, y, z, c);
