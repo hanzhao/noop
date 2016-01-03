@@ -1,6 +1,6 @@
 function func(a, b) {
   console.log('hello');
 }
-function () {
+var x = function () {
   console.log('hello');
 }

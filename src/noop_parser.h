@@ -259,9 +259,7 @@ struct FunctionExpression: Expression {
   FunctionExpression() {
     type = SyntaxTreeNodeType::FunctionExpression;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct Body: Statement {

@@ -3,6 +3,7 @@
 
 #include <noop.h>
 #include <noop_io.h>
+#include <noop_parser.h>
 
 #include <stdexcept>
 #include <assert.h>
@@ -21,9 +22,10 @@ enum {
   NumericObject,
   BooleanObject,
   NaNObject,
-  BlackMagicObject
+  BlackMagicObject,
+  FunctionObject
 };
-}
+} // namespace ObjectType
 
 struct Object {
   int type;
@@ -92,6 +94,15 @@ struct BooleanObject: Object {
   BooleanObject(bool value)
     : Object(ObjectType::BooleanObject),
       value(value) {}
+};
+
+struct FunctionObject: Object {
+  BlockStatement* func;
+  std::vector<String> params;
+
+  FunctionObject(BlockStatement* func)
+    : Object(ObjectType::FunctionObject),
+      func(func), params(params) {}
 };
 
 typedef std::vector<Object*> Pool;

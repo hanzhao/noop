@@ -1062,6 +1062,7 @@ int MemberExpression::Execute() {
 }
 
 int CallExpression::Execute() {
+  int callee_pos = callee->Execute();
   return 0;
 }
 
@@ -1480,4 +1481,18 @@ int IfStatement::Execute() {
     return alternate->Execute();
   }
 }
+
+int FunctionExpression::Execute() {
+  DEBUG << id << endl;
+  vector<String> _params;
+  for (auto& tmp: params) {
+    _params.push_back(((Identifier*)tmp)->name);
+  }
+  for (auto& tmp: _params) {
+    DEBUG << tmp << endl;
+  }
+
+  return 0;
+}
+
 } // namespace noop
