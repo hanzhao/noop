@@ -1,6 +1,8 @@
 function func(a, b) {
   console.log('hello');
 }
-var x = function () {
+function () {
   console.log('hello');
 }
+
+func(1, 2);

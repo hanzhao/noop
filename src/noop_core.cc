@@ -36,6 +36,9 @@ int ExecuteFromFile(string script) {
   DEBUG << "Code length: " << code.length() << endl;
 
   noop::PoolInit(pool);
+  DEBUG << pool[0]->type << " " << pool[1]->type << endl;
+  DEBUG << "---" << endl;
+  global_context->var_table[U"console"] = 1;
 
   Parser().ParseProgram(code)->Execute();
 

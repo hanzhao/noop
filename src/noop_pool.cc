@@ -1,4 +1,5 @@
 #include <noop_pool.h>
+#include <noop_parser.h>
 #include <noop.h>
 
 #include <iostream>
@@ -21,6 +22,16 @@ Pool pool;
 void PoolInit(Pool& pool) {
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);
   pool.push_back(undefined_obj);
+  Object *console = new Object(ObjectType::Object);
+  console->properties[U"log"] = 2;
+  pool.push_back(console);
+  Statement* print = new PrintStatement();
+  BlockStatement* block = new BlockStatement();
+  block->statements.push_back(print);
+  vector<String> params;
+  params.push_back(U"data");
+  FunctionObject *console_log = new FunctionObject(block, params);
+  pool.push_back(console_log);
   /*
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);
   DEBUG << "undefined_obj: " << (undefined_obj->type) << endl;
