@@ -983,6 +983,19 @@ bool IsInt(Number value) {
   return false;
 }
 
+void PrintVarTable() {
+  DEBUG << "========Current Variable Table========" << endl;
+  for (auto& entry: current_context->var_table) {
+    String str;
+    if (pool[entry.second]->ToString(str)) {
+      DEBUG << entry.first << ": " << str << endl;
+    } else {
+      DEBUG << entry.first << ": " << "[Object object]" << endl;
+    }
+  }
+  DEBUG << "======================================" << endl;
+}
+
 int VariableDeclarator::Execute() {
   if (init == nullptr) {
     current_context->var_table[id->name] = 0;
@@ -991,6 +1004,7 @@ int VariableDeclarator::Execute() {
     DEBUG << id->name << " is set to " <<
              pool[current_context->var_table[id->name]] << endl;
   }
+  PrintVarTable();
   return 0;
 }
 
@@ -1011,6 +1025,7 @@ int Body::Execute() {
   for (auto& statement: statements) {
     statement->Execute();
   }
+  current_context = current_context->father;
   return 0;
 }
 
@@ -1051,16 +1066,18 @@ int CallExpression::Execute() {
     if (i >= (int)(arguments.size())) {
       Object *res = new Object(ObjectType::UndefinedObject);
       pool.push_back(res);
+      current_context->var_table[params[i]] = pool.size() - 1;
     } else {
-      arguments[i]->Execute();
+      current_context->var_table[params[i]] = arguments[i]->Execute();
     }
-    current_context->var_table[params[i]] = pool.size() - 1;
   }
   for (auto& tmp: params) {
-    DEBUG << tmp << endl;
-    DEBUG << pool[current_context->var_table[tmp]] << endl;
+    DEBUG << "Param " << tmp << ": " << pool[current_context->var_table[tmp]] << endl;
   }
-  return ((FunctionObject*)pool[callee_pos])->func->Execute();
+  int ret = ((FunctionObject*)pool[callee_pos])->func->Execute();
+  current_context = current_context->father;
+  DEBUG << "Context father: " << current_context->father << endl;
+  return ret;
 }
 
 int AssignmentExpression::Execute() {
@@ -1074,6 +1091,7 @@ int AssignmentExpression::Execute() {
     pool[id] = pool[right_id];
     DEBUG << "Left MemberExpression is set to " << pool[id] << endl;
   }
+  PrintVarTable();
   return 0;
 }
 
@@ -1090,7 +1108,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1104,7 +1122,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1118,7 +1136,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1131,7 +1149,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1144,7 +1162,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1157,7 +1175,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1174,7 +1192,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1191,7 +1209,7 @@ int BinaryExpression::Execute() {
     Number left_value, right_value;
     if ((!pool[left_pos]->ToNumber(left_value)) ||
         (!pool[right_pos]->ToNumber(right_value))) {
-      Object *res = new Object(ObjectType::NaNObject);
+      Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
     };
@@ -1210,7 +1228,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1224,7 +1242,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1240,7 +1258,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1254,7 +1272,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1297,7 +1315,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1311,7 +1329,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1327,7 +1345,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1341,7 +1359,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1357,7 +1375,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1371,7 +1389,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1387,7 +1405,7 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1401,7 +1419,7 @@ int BinaryExpression::Execute() {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new Object(ObjectType::NaNObject);
+        Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
       };
@@ -1424,7 +1442,7 @@ int BinaryExpression::Execute() {
       return right_pos;
     }
   }
-  Object *res = new Object(ObjectType::NaNObject);
+  Object *res = new NaNObject();
   pool.push_back(res);
   return pool.size() - 1;
 }
@@ -1463,7 +1481,7 @@ int BooleanLiteral::Execute() {
 
 
 int NullLiteral::Execute() {
-  Object *res = new Object(ObjectType::NullObject);
+  Object *res = new NullObject();
   pool.push_back(res);
   return pool.size() - 1;
 }
@@ -1495,6 +1513,7 @@ int PrintStatement::Execute() {
   String res;
   pool[current_context->LookUp(U"data")]->ToString(res);
   DEBUG << res << endl;
+  cout << res << endl;
   return 0;
 }
 

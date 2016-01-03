@@ -18,6 +18,7 @@ size_t Object::JumpToProperty(String pro) {
   }
 }
 
+void* pool_head;
 Pool pool;
 void PoolInit(Pool& pool) {
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);
