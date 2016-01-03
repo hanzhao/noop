@@ -1037,7 +1037,6 @@ int Program::Execute() {
   return 0;
 }
 int Identifier::Execute() {
-  DEBUG << name << endl;
   return current_context->LookUp(name);
 }
 
@@ -1047,7 +1046,6 @@ int ThisExpression::Execute() {
 
 int MemberExpression::Execute() {
   size_t res = 0;
-  DEBUG << ((Identifier*)left)->name << endl;
   if(left->type == SyntaxTreeNodeType::Identifier)
     res = current_context->LookUp(((Identifier*)left)->name);
   else if (left->type == SyntaxTreeNodeType::MemberExpression) {
@@ -1082,9 +1080,17 @@ int CallExpression::Execute() {
 
 int AssignmentExpression::Execute() {
   if (left->type == SyntaxTreeNodeType::Identifier) {
-    current_context->var_table[((Identifier*)left)->name] = right->Execute();
-    DEBUG << ((Identifier*)left)->name << " is set to " <<
-             pool[current_context->var_table[((Identifier*)left)->name]] << endl;
+    size_t id = current_context->LookUp(((Identifier*)left)->name);
+    DEBUG << "Find " << ((Identifier*)left)->name << ": " << id << endl;
+    if (id > 0) {
+      // found
+      pool[id] = pool[right->Execute()];
+      DEBUG << ((Identifier*)left)->name << " is set to " << pool[id] << endl;
+    } else {
+      // not found
+      throw new runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
+        " is not defined");
+    }
   }
   else if (left->type == SyntaxTreeNodeType::MemberExpression) {
     int id = left->Execute(), right_id = right->Execute();
@@ -1449,7 +1455,9 @@ int BinaryExpression::Execute() {
 
 int BlockStatement::Execute() {
   for (auto& statement: statements) {
+    DEBUG << "before" << endl;
     statement->Execute();
+    DEBUG << "after" << endl;
   }
   return 0;
 }
@@ -1489,8 +1497,10 @@ int NullLiteral::Execute() {
 int IfStatement::Execute() {
   if (!IsFalse(condition->Execute())) {
     return consequent->Execute();
-  } else {
+  } else if (alternate) {
     return alternate->Execute();
+  } else {
+    return 0;
   }
 }
 
@@ -1512,7 +1522,7 @@ int FunctionExpression::Execute() {
 int PrintStatement::Execute() {
   String res;
   pool[current_context->LookUp(U"data")]->ToString(res);
-  DEBUG << res << endl;
+  DEBUG << "[OUT] " << res << endl;
   cout << res << endl;
   return 0;
 }

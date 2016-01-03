@@ -11,6 +11,7 @@ int Context::LookUp(String s) {
   if (father != nullptr) {
     return father->LookUp(s);
   }
+  // Not found?
   return 0;
 }
 } // noop

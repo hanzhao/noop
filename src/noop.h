@@ -9,7 +9,7 @@ namespace noop {
 
 extern int debug;
 #define DEBUG if (noop::debug) \
-  std::cout << "\033[1m\033[32m[DEBUG]\033[0m "
+  std::cout << "\033[1m\033[32m[" << __FILE__ << ":" << __LINE__ << "]\033[0m "
 
 typedef std::u32string String;
 typedef char32_t Char;
