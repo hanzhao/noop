@@ -1,4 +1,3 @@
-#include <noop_parser.h>
 #include <noop_context.h>
 
 namespace noop {

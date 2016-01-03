@@ -2,7 +2,6 @@
 #define NOOP_CONTEXT_H
 
 #include <noop.h>
-#include <noop_pool.h>
 
 #include <unordered_map>
 
