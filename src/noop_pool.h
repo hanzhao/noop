@@ -35,6 +35,10 @@ struct Object {
   int type;
   virtual bool ToNumber(Number& res) { res = 0; return false; }
   virtual bool ToString(String& res) {
+    if (properties.size() == 0) {
+      res = U"{}";
+      return true;
+    }
     res = U"{ ";
     String value;
     int i = 0;

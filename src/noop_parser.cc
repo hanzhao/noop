@@ -377,7 +377,6 @@ ThisExpression* SyntaxTree::CreateThisExpression() {
 }
 
 bool Parser::IsPunctuation(const String& value) {
-  DEBUG << (look_ahead->type) << endl;
   return look_ahead->type == TokenType::Punctuator &&
     ((PunctuatorToken *)look_ahead)->value == value;
 }
@@ -623,12 +622,12 @@ void Parser::Peek() {
 Token* Parser::Lex() {
   Token* token = look_ahead;
   index = token->end;
-  DEBUG << "Token before LookAhead" << look_ahead << endl;
-  DEBUG << "Index before LookAhead: " << token->end << endl;
+  // DEBUG << "Token before LookAhead" << look_ahead << endl;
+  // DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
   index = token->end;
-  DEBUG << "Token after LookAhead" << look_ahead << endl;
-  DEBUG << "Index after LookAhead: " << token->end << endl;
+  // DEBUG << "Token after LookAhead" << look_ahead << endl;
+  // DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
@@ -938,7 +937,6 @@ Body* Parser::ParseBody() {
   Body* body = new Body();
   while (index < length) {
     if ((statement = ParseStatement()) != nullptr) {
-      DEBUG << "Parsed statement type: " << statement->type << endl;
       body->statements.push_back(statement);
     } else {
       break;
@@ -955,7 +953,6 @@ Program* Parser::ParseProgram(String code) {
   index = 0;
   length = code.length();
   look_ahead = nullptr;
-  DEBUG << source << endl;
   Peek();
   SyntaxTreeNode* node = delegate.CreateProgram(ParseBody());
   DEBUG << "Parsed program: " << endl << node << endl;
@@ -1021,8 +1018,7 @@ int VariableStatement::Execute() {
 }
 
 int ExpressionStatement::Execute() {
-  expression->Execute();
-  return 0;
+  return expression->Execute();
 }
 
 int Body::Execute() {
@@ -1064,6 +1060,8 @@ int MemberExpression::Execute() {
 int CallExpression::Execute() {
   int callee_pos = callee->Execute();
   current_context = new Context(current_context);
+  DEBUG << "Function call: switching context " << current_context->father <<
+    " to " << current_context << endl;
   std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
   for (int i = 0; i < (int)params.size(); ++i) {
     if (i >= (int)(arguments.size())) {
@@ -1074,12 +1072,10 @@ int CallExpression::Execute() {
       current_context->var_table[params[i]] = arguments[i]->Execute();
     }
   }
-  for (auto& tmp: params) {
-    DEBUG << "Param " << tmp << ": " << pool[current_context->var_table[tmp]] << endl;
-  }
   int ret = ((FunctionObject*)pool[callee_pos])->func->Execute();
+  DEBUG << "Function call end: switching context " << current_context <<
+    " to " << current_context->father << endl;
   current_context = current_context->father;
-  DEBUG << "Context father: " << current_context->father << endl;
   return ret;
 }
 
@@ -1459,12 +1455,11 @@ int BinaryExpression::Execute() {
 }
 
 int BlockStatement::Execute() {
+  int ret = 0;
   for (auto& statement: statements) {
-    DEBUG << "before" << endl;
-    statement->Execute();
-    DEBUG << "after" << endl;
+    ret = statement->Execute();
   }
-  return 0;
+  return ret;
 }
 
 int WhileStatement::Execute() {
@@ -1527,8 +1522,7 @@ int FunctionExpression::Execute() {
 int PrintStatement::Execute() {
   String res;
   pool[current_context->LookUp(U"data")]->ToString(res);
-  DEBUG << "[OUT] " << res << endl;
-  cout << res << endl;
+  STDOUT << res << endl;
   return 0;
 }
 
