@@ -480,6 +480,15 @@ StringLiteralToken* Parser::GetStringLiteral() {
       case 'r':
         str += U'\r';
         break;
+      case '\\':
+        str += U'\\';
+        break;
+      case '\'':
+        str += U'\'';
+        break;
+      case '"':
+        str += U'"';
+        break;
       default:
         assert(false);
       }
