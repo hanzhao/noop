@@ -4,10 +4,10 @@
 #include <iostream>
 
 #include <noop.h>
+#include <noop_context.h>
 #include <noop_io.h>
 #include <noop_parser.h>
 #include <noop_pool.h>
-#include <noop_context.h>
 
 using namespace std;
 
@@ -35,8 +35,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
 
-  noop::PoolInit(pool);
-  global_context->var_table[U"console"] = 1;
+  noop::PoolInit(pool, global_context);
 
   Parser().ParseProgram(code)->Execute();
 

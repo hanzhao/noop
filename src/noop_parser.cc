@@ -1058,21 +1058,33 @@ int MemberExpression::Execute() {
 }
 
 int CallExpression::Execute() {
-  int callee_pos = callee->Execute();
+  int callee_pos = callee->Execute(), ret = 0;
   current_context = new Context(current_context);
   DEBUG << "Function call: switching context " << current_context->father <<
     " to " << current_context << endl;
-  std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
-  for (int i = 0; i < (int)params.size(); ++i) {
-    if (i >= (int)(arguments.size())) {
-      Object *res = new Object(ObjectType::UndefinedObject);
-      pool.push_back(res);
-      current_context->var_table[params[i]] = pool.size() - 1;
-    } else {
-      current_context->var_table[params[i]] = arguments[i]->Execute();
+  /* Special NativeFunctionObject */
+  if (pool[callee_pos]->type == ObjectType::NativeFunctionObject) {
+    DEBUG << "Call native function" << endl;
+    vector<Object*> args;
+    for (auto& arg: arguments) {
+      args.push_back(pool[arg->Execute()]);
     }
+    ret = (*(((NativeFunctionObject*)pool[callee_pos])->function))(args);
+  } else if (pool[callee_pos]->type == ObjectType::FunctionObject) {
+    std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
+    for (size_t i = 0; i < params.size(); ++i) {
+      if (i >= arguments.size()) {
+        Object *res = new Object(ObjectType::UndefinedObject);
+        pool.push_back(res);
+        current_context->var_table[params[i]] = pool.size() - 1;
+      } else {
+        current_context->var_table[params[i]] = arguments[i]->Execute();
+      }
+    }
+    ret = ((FunctionObject*)pool[callee_pos])->function->Execute();
+  } else {
+    throw runtime_error("Callee is not a function");
   }
-  int ret = ((FunctionObject*)pool[callee_pos])->func->Execute();
   DEBUG << "Function call end: switching context " << current_context <<
     " to " << current_context->father << endl;
   current_context = current_context->father;
@@ -1505,11 +1517,15 @@ int IfStatement::Execute() {
 }
 
 int FunctionExpression::Execute() {
+  String name = U"";
   vector<String> _params;
   for (auto& tmp: params) {
     _params.push_back(((Identifier*)tmp)->name);
   }
-  Object *res = new FunctionObject((BlockStatement*)body, _params);
+  if (id != nullptr) {
+    name = ((Identifier*)id)->name;
+  }
+  Object *res = new FunctionObject(name, (BlockStatement*)body, _params);
   pool.push_back(res);
   if (id != NULL) {
     current_context->var_table[id->name] = pool.size() - 1;

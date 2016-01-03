@@ -1,16 +1,16 @@
 #ifndef NOOP_POOL_H
 #define NOOP_POOL_H
 
-#include <noop.h>
-#include <noop_io.h>
-#include <noop_parser.h>
-
+#include <cassert>
 #include <stdexcept>
-#include <assert.h>
-#include <vector>
 #include <string>
 #include <sstream>
 #include <unordered_map>
+#include <vector>
+
+#include <noop.h>
+#include <noop_io.h>
+#include <noop_parser.h>
 
 namespace noop {
 
@@ -24,7 +24,8 @@ enum {
   BooleanObject,
   NaNObject,
   BlackMagicObject,
-  FunctionObject
+  FunctionObject,
+  NativeFunctionObject
 };
 }
 
@@ -142,15 +143,38 @@ struct NaNObject: Object {
 };
 
 struct FunctionObject: Object {
-  BlockStatement* func;
+  String name;
+  BlockStatement* function;
   std::vector<String> params;
+  bool ToNumber(Number& res) override {
+    res = 0;
+    return true;
+  }
+  bool ToString(String& res) override {
+    res = U"function " + name + U"() { [code] }";
+    return true;
+  }
+  FunctionObject(String name, BlockStatement* function, std::vector<String> params)
+    : Object(ObjectType::FunctionObject), name(name), function(function), params(params) { }
+};
 
-  FunctionObject(BlockStatement* func, std::vector<String> params)
-    : Object(ObjectType::FunctionObject), func(func), params(params) { }
+struct NativeFunctionObject: Object {
+  String name;
+  int (*function)(std::vector<Object*>);
+  bool ToNumber(Number& res) override {
+    res = 0;
+    return true;
+  }
+  bool ToString(String& res) override {
+    res = U"function " + name + U"() { [native code] }";
+    return true;
+  }
+  NativeFunctionObject(String name, int (*function)(const std::vector<Object*>))
+    : Object(ObjectType::NativeFunctionObject), name(name), function(function) { }
 };
 
 typedef std::vector<Object*> Pool;
-void PoolInit(Pool& pool);
+void PoolInit(Pool& pool, Context* global);
 extern Pool pool;
 
 }

@@ -1,8 +1,10 @@
 #include <noop_pool.h>
-#include <noop_parser.h>
-#include <noop.h>
 
 #include <iostream>
+
+#include <noop.h>
+#include <noop_bindings.h>
+#include <noop_parser.h>
 
 using namespace std;
 
@@ -20,32 +22,16 @@ size_t Object::JumpToProperty(String pro) {
 
 void* pool_head;
 Pool pool;
-void PoolInit(Pool& pool) {
+void PoolInit(Pool& pool, Context* global) {
   Object* undefined_obj = new Object(ObjectType::UndefinedObject);
   pool.push_back(undefined_obj);
+  /* console.log */
   Object* console = new Object(ObjectType::Object);
-  console->properties[U"log"] = 2;
-  pool.push_back(console);
-  Statement* print = new PrintStatement();
-  BlockStatement* block = new BlockStatement();
-  block->statements.push_back(print);
-  vector<String> params;
-  params.push_back(U"data");
-  FunctionObject* console_log = new FunctionObject(block, params);
+  Object* console_log = new NativeFunctionObject(U"log", Bindings::ConsoleLog);
   pool.push_back(console_log);
-  /*
-  Object *undefined_obj = new Object(ObjectType::UndefinedObject);
-  DEBUG << "undefined_obj: " << (undefined_obj->type) << endl;
-  pool.push_back(undefined_obj);
-  Object *null_obj = new NullObject();
-  DEBUG << "null_obj: " << (null_obj->type) << endl;
-  pool.push_back(null_obj);
-  Object *false_obj = new BooleanObject(false);
-  DEBUG << "false_obj: " << (false_obj->type) << endl;
-  pool.push_back(false_obj);
-  Object *true_obj = new BooleanObject(true);
-  DEBUG << "true_obj: " << (true_obj->type) << endl;
-  pool.push_back(true_obj);
-  */
+  console->properties[U"log"] = pool.size() - 1;
+  pool.push_back(console);
+  global->var_table[U"console"] = pool.size() - 1;
+  return;
 }
 } // noop
