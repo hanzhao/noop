@@ -221,6 +221,9 @@ ostream& operator <<(ostream& _out, Object* obj) {
   case ObjectType::NullObject:
     _out << "NullObject { }";
     break;
+  case ObjectType::FunctionObject:
+    _out << "FunctionObject { }";
+    break;
   case ObjectType::StringObject:
     _out << "StringObject { value: " << ((StringObject*)obj)->value << " }";
     break;
@@ -993,29 +996,20 @@ int VariableDeclarator::Execute() {
 
 int VariableStatement::Execute() {
   for (auto declaration: declarations) {
-    if (declaration->Execute()) {
-      cout << "ERROR" << endl;
-      exit(-1);
-    }
+    declaration->Execute();
   }
   return 0;
 }
 
 int ExpressionStatement::Execute() {
-  if (expression->Execute()) {
-    cout << "ERROR" << endl;
-    exit(-1);
-  }
+  expression->Execute();
   return 0;
 }
 
 int Body::Execute() {
   current_context = new Context(current_context);
   for (auto& statement: statements) {
-    if (statement->Execute()) {
-      cout << "ERROR" << endl;
-      exit(-1);
-    }
+    statement->Execute();
   }
   /*
   DEBUG << ((NumericObject*)pool[current_context->var_table[U"a"]])->value << endl;
@@ -1063,7 +1057,22 @@ int MemberExpression::Execute() {
 
 int CallExpression::Execute() {
   int callee_pos = callee->Execute();
-  return 0;
+  current_context = new Context(current_context);
+  std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
+  for (int i = 0; i < (int)params.size(); ++i) {
+    if (i >= (int)(arguments.size())) {
+      Object *res = new Object(ObjectType::UndefinedObject);
+      pool.push_back(res);
+    } else {
+      arguments[i]->Execute();
+    }
+    current_context->var_table[params[i]] = pool.size() - 1;
+  }
+  for (auto& tmp: params) {
+    DEBUG << tmp << endl;
+    DEBUG << pool[current_context->var_table[tmp]] << endl;
+  }
+  return ((FunctionObject*)pool[callee_pos])->func->Execute();
 }
 
 int AssignmentExpression::Execute() {
@@ -1434,10 +1443,7 @@ int BinaryExpression::Execute() {
 
 int BlockStatement::Execute() {
   for (auto& statement: statements) {
-    if (statement->Execute()) {
-      cout << "ERROR" << endl;
-      exit(-1);
-    }
+    statement->Execute();
   }
   return 0;
 }
@@ -1483,16 +1489,18 @@ int IfStatement::Execute() {
 }
 
 int FunctionExpression::Execute() {
-  DEBUG << id << endl;
   vector<String> _params;
   for (auto& tmp: params) {
     _params.push_back(((Identifier*)tmp)->name);
   }
-  for (auto& tmp: _params) {
-    DEBUG << tmp << endl;
+  Object *res = new FunctionObject((BlockStatement*)body, _params);
+  pool.push_back(res);
+  if (id != NULL) {
+    current_context->var_table[id->name] = pool.size() - 1;
+    DEBUG << id->name << " is set to " <<
+             pool[current_context->var_table[id->name]] << endl;
   }
-
-  return 0;
+  return pool.size() - 1;
 }
 
 } // namespace noop

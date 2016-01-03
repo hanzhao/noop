@@ -25,7 +25,7 @@ enum {
   BlackMagicObject,
   FunctionObject
 };
-} // namespace ObjectType
+}
 
 struct Object {
   int type;
@@ -100,7 +100,7 @@ struct FunctionObject: Object {
   BlockStatement* func;
   std::vector<String> params;
 
-  FunctionObject(BlockStatement* func)
+  FunctionObject(BlockStatement* func, std::vector<String> params)
     : Object(ObjectType::FunctionObject),
       func(func), params(params) {}
 };
