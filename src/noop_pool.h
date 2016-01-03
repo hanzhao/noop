@@ -87,7 +87,7 @@ struct NumericObject: Object {
   bool ToString(String& res) override {
     std::string _tmp = "";
     std::stringstream sio(_tmp);
-    sio.precision(17);
+    sio.precision(16);
     sio << value;
     sio >> _tmp;
     res = Encoding::UTF8ToUTF32(_tmp);

@@ -377,6 +377,7 @@ ThisExpression* SyntaxTree::CreateThisExpression() {
 }
 
 bool Parser::IsPunctuation(const String& value) {
+  DEBUG << (look_ahead->type) << endl;
   return look_ahead->type == TokenType::Punctuator &&
     ((PunctuatorToken *)look_ahead)->value == value;
 }
@@ -394,7 +395,7 @@ bool Parser::IsIdentifierName(Token* token) {
 }
 
 void Parser::SkipUselessness() {
-  Char c;
+  Char c, c2;
   bool blocking = false, lining = false;
   while (index < length) {
     c = source[index];
@@ -410,11 +411,15 @@ void Parser::SkipUselessness() {
         blocking = false;
       }
     } else if (c == '/') {
-      c = source[index++];
-      if (c == '/') {
+      c2 = source[index + 1];
+      if (c2 == '/') {
+        index += 2;
         lining = true;
-      } else if (c == '*') {
+      } else if (c2 == '*') {
+        index += 2;
         blocking = true;
+      } else {
+        break;
       }
     } else if (CharType::IsSpace(c)) {
       index += 1;
@@ -618,12 +623,12 @@ void Parser::Peek() {
 Token* Parser::Lex() {
   Token* token = look_ahead;
   index = token->end;
-//  DEBUG << "Token before LookAhead" << look_ahead << endl;
-//  DEBUG << "Index before LookAhead: " << token->end << endl;
+  DEBUG << "Token before LookAhead" << look_ahead << endl;
+  DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
   index = token->end;
-//  DEBUG << "Token after LookAhead" << look_ahead << endl;
-//  DEBUG << "Index after LookAhead: " << token->end << endl;
+  DEBUG << "Token after LookAhead" << look_ahead << endl;
+  DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
