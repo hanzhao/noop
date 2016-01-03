@@ -21,9 +21,9 @@ size_t Object::JumpToProperty(String pro) {
 void* pool_head;
 Pool pool;
 void PoolInit(Pool& pool) {
-  Object *undefined_obj = new Object(ObjectType::UndefinedObject);
+  Object* undefined_obj = new Object(ObjectType::UndefinedObject);
   pool.push_back(undefined_obj);
-  Object *console = new Object(ObjectType::Object);
+  Object* console = new Object(ObjectType::Object);
   console->properties[U"log"] = 2;
   pool.push_back(console);
   Statement* print = new PrintStatement();
@@ -31,7 +31,7 @@ void PoolInit(Pool& pool) {
   block->statements.push_back(print);
   vector<String> params;
   params.push_back(U"data");
-  FunctionObject *console_log = new FunctionObject(block, params);
+  FunctionObject* console_log = new FunctionObject(block, params);
   pool.push_back(console_log);
   /*
   Object *undefined_obj = new Object(ObjectType::UndefinedObject);

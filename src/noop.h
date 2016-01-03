@@ -5,6 +5,10 @@
 #include <iostream>
 #include <locale>
 
+#define NOOP_VERSION_MAJOR 0
+#define NOOP_VERSION_MINOR 0
+#define NOOP_VERSION_PATCH 1
+
 namespace noop {
 
 extern int debug;

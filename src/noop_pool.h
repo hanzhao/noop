@@ -78,8 +78,7 @@ struct StringObject: Object {
     return true;
   }
   StringObject(String value)
-    : Object(ObjectType::StringObject),
-      value(value) {}
+    : Object(ObjectType::StringObject), value(value) { }
 };
 
 struct NumericObject: Object {
@@ -98,8 +97,7 @@ struct NumericObject: Object {
     return true;
   }
   NumericObject(Number value)
-    : Object(ObjectType::NumericObject),
-      value(value) {}
+    : Object(ObjectType::NumericObject), value(value) { }
 };
 
 struct BooleanObject: Object {
@@ -148,8 +146,7 @@ struct FunctionObject: Object {
   std::vector<String> params;
 
   FunctionObject(BlockStatement* func, std::vector<String> params)
-    : Object(ObjectType::FunctionObject),
-      func(func), params(params) {}
+    : Object(ObjectType::FunctionObject), func(func), params(params) { }
 };
 
 typedef std::vector<Object*> Pool;

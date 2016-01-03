@@ -7,6 +7,7 @@ extern const char kSwitchEval[];
 extern const char kSwitchPrint[];
 extern const char kSwitchVerbose[];
 extern const char kSwitchHelp[];
+extern const char kSwitchVersion[];
 
 } // Switches
 } // noop

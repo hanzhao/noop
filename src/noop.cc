@@ -20,6 +20,12 @@ namespace noop {
     cout << "--verbose         run in verbose mode and show debug logs" << endl;
     return 0;
   }
+  int PrintVersion() {
+    cout << "v" << NOOP_VERSION_MAJOR << "."
+                << NOOP_VERSION_MINOR << "."
+                << NOOP_VERSION_PATCH << endl;
+    return 0;
+  }
 }
 
 int main(int argc, const char* argv[]) {
@@ -44,6 +50,9 @@ int main(int argc, const char* argv[]) {
       auto& arg = args[i];
       if (arg == noop::Switches::kSwitchHelp) {
         return noop::PrintHelp();
+      }
+      if (arg == noop::Switches::kSwitchVersion) {
+        return noop::PrintVersion();
       }
       if (i < args.size() - 1 && arg == noop::Switches::kSwitchEval) {
         /* TODO: Evaluate script. */
