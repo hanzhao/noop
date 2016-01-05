@@ -193,9 +193,7 @@ struct ArrayExpression: Expression {
   ArrayExpression() {
     type = SyntaxTreeNodeType::ArrayExpression;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct SequenceExpression: Expression {

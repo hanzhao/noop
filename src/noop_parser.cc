@@ -1150,6 +1150,16 @@ int Identifier::Execute() {
   return current_context->LookUp(name);
 }
 
+int ArrayExpression::Execute() {
+  vector<int> _elements;
+  for (auto& element: elements) {
+    _elements.push_back(element->Execute());
+  }
+  ArrayObject* obj = new ArrayObject(_elements);
+  pool.push_back(obj);
+  return pool.size() - 1;
+}
+
 int ThisExpression::Execute() {
   return 0;
 }
@@ -1385,6 +1395,12 @@ int BinaryExpression::Execute() {
       );
       pool.push_back(res);
       return pool.size() - 1;
+    } else {
+      Object *res = new BooleanObject(
+        false
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
     }
   } else if (_operator == U"!=") {
     if (left_pos == right_pos) {
@@ -1419,6 +1435,12 @@ int BinaryExpression::Execute() {
       );
       pool.push_back(res);
       return pool.size() - 1;
+    } else {
+      Object *res = new BooleanObject(
+        true
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
     }
   } else if (_operator == U"===") {
     if (pool[left_pos]->type == pool[right_pos]->type) {
@@ -1443,6 +1465,33 @@ int BinaryExpression::Execute() {
     } else {
       Object *res = new BooleanObject(
         false
+      );
+      pool.push_back(res);
+      return pool.size() - 1;
+    }
+  } else if (_operator == U"!==") {
+    if (pool[left_pos]->type == pool[right_pos]->type) {
+      if (pool[left_pos]->type == ObjectType::NumericObject ||
+          pool[left_pos]->type == ObjectType::StringObject ||
+          pool[left_pos]->type == ObjectType::BooleanObject) {
+        String left_value, right_value;
+        pool[left_pos]->ToString(left_value);
+        pool[right_pos]->ToString(right_value);
+        Object *res = new BooleanObject(
+          left_value != right_value
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      } else {
+        Object *res = new BooleanObject(
+          left_pos != right_pos
+        );
+        pool.push_back(res);
+        return pool.size() - 1;
+      }
+    } else {
+      Object *res = new BooleanObject(
+        true
       );
       pool.push_back(res);
       return pool.size() - 1;

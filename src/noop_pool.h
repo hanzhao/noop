@@ -25,6 +25,7 @@ enum {
   NaNObject,
   BlackMagicObject,
   FunctionObject,
+  ArrayObject,
   NativeFunctionObject
 };
 }
@@ -169,6 +170,31 @@ struct FunctionObject: Object {
   }
   FunctionObject(String name, BlockStatement* function, std::vector<String> params)
     : Object(ObjectType::FunctionObject), name(name), function(function), params(params) { }
+};
+
+struct ArrayObject: Object {
+  std::vector<int> elements;
+  bool ToNumber(Number& res) override {
+    if (false) { res = 0.0; }
+    return false;
+  }
+  bool ToString(String& res) override {
+    res = U"[ ";
+    String value = U"";
+    bool flag = false;
+    for (auto& e: elements) {
+      if ((*((((std::vector<Object*>*)pool_head)->begin()) + e))->ToString(value)) {
+        if (flag) { res += U", "; }
+        res += value;
+        flag = true;
+      } else {
+        return false;
+      }
+    }
+    res += U" ]";
+    return true;
+  }
+  ArrayObject(std::vector<int> elements) : Object(ObjectType::ArrayObject), elements(elements) { }
 };
 
 struct NativeFunctionObject: Object {
