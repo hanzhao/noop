@@ -1123,7 +1123,7 @@ int AssignmentExpression::Execute() {
       DEBUG << ((Identifier*)left)->name << " is set to " << pool[id] << endl;
     } else {
       // not found
-      throw new runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
+      throw runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
         " is not defined");
     }
   }
