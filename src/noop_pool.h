@@ -59,7 +59,7 @@ struct Object {
     return true;
   }
   std::unordered_map<String, size_t> properties;
-  Object(int type): type(type) {}
+  Object(int type):type(type) {}
   size_t JumpToProperty(String pro);
 };
 
@@ -73,7 +73,7 @@ struct UndefinedObject: Object {
     res = U"undefined";
     return true;
   }
-  UndefinedObject(): Object(ObjectType::UndefinedObject) { }
+  UndefinedObject():Object(ObjectType::UndefinedObject) {}
 };
 
 struct StringObject: Object {
@@ -92,8 +92,7 @@ struct StringObject: Object {
     res = value;
     return true;
   }
-  StringObject(String value)
-    : Object(ObjectType::StringObject), value(value) { }
+  StringObject(String value):Object(ObjectType::StringObject), value(value) {}
 };
 
 struct NumericObject: Object {
@@ -111,8 +110,7 @@ struct NumericObject: Object {
     res = Encoding::UTF8ToUTF32(_tmp);
     return true;
   }
-  NumericObject(Number value)
-    : Object(ObjectType::NumericObject), value(value) { }
+  NumericObject(Number value):Object(ObjectType::NumericObject), value(value) {}
 };
 
 struct BooleanObject: Object {
@@ -129,7 +127,7 @@ struct BooleanObject: Object {
     }
     return true;
   }
-  BooleanObject(bool value): Object(ObjectType::BooleanObject), value(value) { }
+  BooleanObject(bool value):Object(ObjectType::BooleanObject), value(value) {}
 };
 
 struct NullObject: Object {
@@ -141,7 +139,7 @@ struct NullObject: Object {
     res = U"null";
     return true;
   }
-  NullObject(): Object(ObjectType::NullObject) { }
+  NullObject():Object(ObjectType::NullObject) { }
 };
 
 struct NaNObject: Object {
@@ -153,7 +151,7 @@ struct NaNObject: Object {
     res = U"NaN";
     return true;
   }
-  NaNObject(): Object(ObjectType::NaNObject) { }
+  NaNObject():Object(ObjectType::NaNObject) { }
 };
 
 struct FunctionObject: Object {
@@ -168,8 +166,7 @@ struct FunctionObject: Object {
     res = U"function " + name + U"() { [code] }";
     return true;
   }
-  FunctionObject(String name, BlockStatement* function, std::vector<String> params)
-    : Object(ObjectType::FunctionObject), name(name), function(function), params(params) { }
+  FunctionObject(String name, BlockStatement* function, std::vector<String> params):Object(ObjectType::FunctionObject), name(name), function(function), params(params) {}
 };
 
 struct ArrayObject: Object {
@@ -208,14 +205,18 @@ struct NativeFunctionObject: Object {
     res = U"function " + name + U"() { [native code] }";
     return true;
   }
-  NativeFunctionObject(String name, int (*function)(const std::vector<Object*>))
-    : Object(ObjectType::NativeFunctionObject), name(name), function(function) { }
+  NativeFunctionObject(String name, int (*function)(const std::vector<Object*>)):Object(ObjectType::NativeFunctionObject), name(name), function(function) {}
 };
 
-typedef std::vector<Object*> Pool;
-void PoolInit(Pool& pool, Context* global);
-extern Pool pool;
-
+typedef std::vector<Object*> VecObjp;
+class Pool {
+public:
+  VecObjp pool;
+  Pool();
+  Pool(Context* global);
+  size_t AddToPool(Object *objp);
+};
+Pool* MemPool = NULL;
+void* pool_head;
 }
-
 #endif

@@ -20,35 +20,40 @@ size_t Object::JumpToProperty(String pro) {
   }
 }
 
-void* pool_head;
-Pool pool;
-void PoolInit(Pool& pool, Context* global) {
-  pool_head = &pool;
-  /* undefined */
-  Object* undefined_obj = new UndefinedObject();
-  pool.push_back(undefined_obj);
-  /* console.log */
-  Object* console = new Object(ObjectType::Object);
-  Object* console_log = new NativeFunctionObject(U"log", Bindings::ConsoleLog);
-  Object* console_read = new NativeFunctionObject(U"read", Bindings::ConsoleRead);
-  pool.push_back(console_log);
-  console->properties[U"log"] = pool.size() - 1;
-  pool.push_back(console_read);
-  console->properties[U"read"] = pool.size() - 1;
-  pool.push_back(console);
-  global->var_table[U"console"] = pool.size() - 1;
-  /* parseFloat */
-  Object* parse_float = new NativeFunctionObject(U"parseFloat", Bindings::ParseFloat);
-  pool.push_back(parse_float);
-  global->var_table[U"parseFloat"] = pool.size() - 1;
-  /* parseInt */
-  Object* parse_int = new NativeFunctionObject(U"parseInt", Bindings::ParseInt);
-  pool.push_back(parse_int);
-  global->var_table[U"parseInt"] = pool.size() - 1;
-  /* eval */
-  Object* eval = new NativeFunctionObject(U"eval", Bindings::Eval);
-  pool.push_back(eval);
-  global->var_table[U"eval"] = pool.size() - 1;
-  return;
-}
+
+class Pool {
+public:
+  VecObj pool;
+  Pool(){}
+  Pool(Context* global)
+  {
+    Object* undefined_obj = new UndefinedObject();
+    AddToPool(undefined_obj);
+    /* console.log */
+    Object* console = new Object(ObjectType::Object);
+    Object* console_log = new NativeFunctionObject(U"log", Bindings::ConsoleLog);
+    Object* console_read = new NativeFunctionObject(U"read", Bindings::ConsoleRead);
+    console->properties[U"log"] = AddToPool(console_log);
+    console->properties[U"read"] = AddToPool(console_read);
+    global->var_table[U"console"] = AddToPool(console);
+    /* parseFloat */
+    Object* parse_float = new NativeFunctionObject(U"parseFloat", Bindings::ParseFloat);
+    global->var_table[U"parseFloat"] = AddToPool(parse_float);
+    /* parseInt */
+    Object* parse_int = new NativeFunctionObject(U"parseInt", Bindings::ParseInt);
+    global->var_table[U"parseInt"] = AddToPool(parse_int);
+    /* eval */
+    Object* eval = new NativeFunctionObject(U"eval", Bindings::Eval);
+    global->var_table[U"eval"] = AddToPool(eval);
+    return;
+  }
+  size_t AddToPool(Object *objp) {
+    pool.push_back(objp);
+    return pool.size() - 1;
+  }
+  Object* At(size_t pos) {
+    return pool[pos];
+  }
+};
+
 } // noop

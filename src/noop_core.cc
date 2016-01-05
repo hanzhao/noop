@@ -36,8 +36,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
 
-  noop::PoolInit(pool, global_context);
-
+  MemPool = new Pool(global_context);
   Parser().ParseProgram(code)->Execute();
 
   /* For DEBUG

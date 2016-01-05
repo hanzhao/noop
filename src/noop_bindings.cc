@@ -31,38 +31,33 @@ int ConsoleRead(const std::vector<Object*> args) {
   string input;
   getline(cin, input);
   StringObject* obj = new StringObject(Encoding::UTF8ToUTF32(input));
-  pool.push_back(obj);
-  return pool.size() - 1;
+  return MemPool->AddToPool(obj);
 }
 
 int ParseFloat(const std::vector<Object*> args) {
   String str = U"";
   if (args.size() == 0 || !(args[0]->ToString(str))) {
     NaNObject* nan = new NaNObject();
-    pool.push_back(nan);
-    return pool.size() - 1;
+    return MemPool->AddToPool(nan);
   }
   Number num;
   stringstream sin(Encoding::UTF32ToUTF8(str));
   sin >> num;
   NumericObject* obj = new NumericObject(num);
-  pool.push_back(obj);
-  return pool.size() - 1;
+  return MemPool->AddToPool(obj);
 }
 
 int ParseInt(const std::vector<Object*> args) {
   String str = U"";
   if (args.size() == 0 || !(args[0]->ToString(str))) {
     NaNObject* nan = new NaNObject();
-    pool.push_back(nan);
-    return pool.size() - 1;
+    return MemPool->AddToPool(nan);
   }
   Number num;
   stringstream sin(Encoding::UTF32ToUTF8(str));
   sin >> num;
   NumericObject* obj = new NumericObject((Number)((long long)num));
-  pool.push_back(obj);
-  return pool.size() - 1;
+  return MemPool->AddToPool(obj);
 }
 
 int Eval(const std::vector<Object*> args) {
