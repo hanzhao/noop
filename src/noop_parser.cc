@@ -110,6 +110,7 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
     _out << "NULL";
     return _out;
   }
+  bool flag = false;
   switch (node->type) {
   case SyntaxTreeNodeType::NullLiteral:
     _out << "NullLiteralNode { }";
@@ -146,6 +147,15 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
     _out << "FunctionExpressionNode { name: " << ((FunctionExpression*)node)->id <<
     ", params: " << ((FunctionExpression*)node)->params << ", body: " <<
     ((FunctionExpression*)node)->body << " }";
+    break;
+  case SyntaxTreeNodeType::ObjectExpression:
+    _out << "ObjectExpression { ";
+    for (auto& property: ((ObjectExpression*)node)->properties) {
+      if (flag) { _out << ", "; }
+      _out << property.first << ": " << property.second;
+      flag = true;
+    }
+    _out << " }";
     break;
   case SyntaxTreeNodeType::AssignmentExpression:
     _out << "AssignmentExpressionNode { left: " << ((AssignmentExpression*)node)->left <<
@@ -292,6 +302,12 @@ AssignmentExpression* SyntaxTree::CreateAssignmentExpression(String op,
   return node;
 }
 
+ObjectExpression* SyntaxTree::CreateObjectExpression(vector<pair<StringLiteral*, Expression*>> properties) {
+  ObjectExpression* node = new ObjectExpression();
+  node->properties = properties;
+  return node;
+}
+
 SequenceExpression* SyntaxTree::CreateSequenceExpression(vector<Expression*> expressions) {
   SequenceExpression* node = new SequenceExpression();
   node->expressions = expressions;
@@ -432,8 +448,8 @@ void Parser::GetKeyword(const String& keyword) {
   Token* token = Lex();
   if (token->type != TokenType::Keyword ||
       ((IdentifierToken *)token)->name != keyword) {
-    throw runtime_error("Expected word " + Encoding::UTF32ToUTF8(keyword) +
-                        " is not matched.");
+    throw runtime_error("GetKeyword: Unexpected word " + Encoding::UTF32ToUTF8(keyword) +
+                        ".");
   }
 }
 
@@ -592,7 +608,7 @@ PunctuatorToken* Parser::GetPunctuator() {
     token->value = token->value + c;
     return token;
   }
-  throw runtime_error("Unknown token");
+  throw runtime_error("GetPunctuator: Unexcepted token.");
 }
 
 /*
@@ -631,12 +647,12 @@ void Parser::Peek() {
 Token* Parser::Lex() {
   Token* token = look_ahead;
   index = token->end;
-  // DEBUG << "Token before LookAhead" << look_ahead << endl;
-  // DEBUG << "Index before LookAhead: " << token->end << endl;
+  DEBUG << "Token before LookAhead" << look_ahead << endl;
+  DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
   index = token->end;
-  // DEBUG << "Token after LookAhead" << look_ahead << endl;
-  // DEBUG << "Index after LookAhead: " << token->end << endl;
+  DEBUG << "Token after LookAhead" << look_ahead << endl;
+  DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
@@ -655,7 +671,7 @@ vector<VariableDeclarator *> Parser::ParseVariableDeclarationList() {
   vector<VariableDeclarator *> res;
   do {
     if (look_ahead->type != TokenType::Identifier) {
-      throw runtime_error("Var declaration needs an identifier");
+      throw runtime_error("Parse VariableDeclationList: Declaration needs an identifier.");
     }
     res.push_back(ParseVariableDeclarator());
     DEBUG << "A var declarator pushed back, look_head " << look_ahead << endl;
@@ -718,6 +734,44 @@ Expression* Parser::ParseFunctionExpression() {
   return delegate.CreateFunctionExpression(id, params, body);
 }
 
+Expression* Parser::ParseObjectExpression() {
+  Lex(); // {
+  vector<pair<StringLiteral*, Expression*>> properties;
+  while (!IsPunctuation(U"}")) {
+    // key
+    Token* token = Lex();
+    String value = U"";
+    if (token->type == TokenType::StringLiteral) {
+      value = ((StringLiteralToken*)token)->value;
+    } else if (token->type == TokenType::NumericLiteral) {
+      stringstream sio;
+      string _value = "";
+      sio << ((NumericLiteralToken*)token)->value;
+      sio >> _value;
+      value = Encoding::UTF8ToUTF32(_value);
+    } else if (token->type == TokenType::Identifier) {
+      value = ((IdentifierToken*)token)->name;
+    } else {
+      throw runtime_error("Parse ObjectExpression: Invalid object property name.");
+    }
+    StringLiteral* key_node = new StringLiteral();
+    key_node->value = value;
+    // :
+    assert(IsPunctuation(U":"));
+    Lex();
+    // value
+    Expression* value_node = ParsePrimaryExpression();
+    properties.push_back(make_pair(key_node, value_node));
+    if (!IsPunctuation(U"}")) {
+      // ,
+      assert(IsPunctuation(U","));
+      Lex();
+    }
+  }
+  Lex(); // }
+  return delegate.CreateObjectExpression(properties);
+}
+
 Expression* Parser::ParsePrimaryExpression() {
   int type = look_ahead->type;
   if (type == TokenType::Identifier) {
@@ -735,13 +789,20 @@ Expression* Parser::ParsePrimaryExpression() {
       return ParseFunctionExpression();
     }
   }
-  throw runtime_error("Parse primary expression: unknown token.");
+  if (type == TokenType::Punctuator) {
+    if (IsPunctuation(U"{")) {
+      return ParseObjectExpression();
+    } // else if (IsPunctuation("[")) {
+      // return ParseArrayExpression();
+    // }
+  }
+  throw runtime_error("Parse PrimaryExpression: Unexcepted token.");
 }
 
 Identifier* Parser::ParseLiteralProperty() {
   Token* token = Lex();
   if (!IsIdentifierName(token)) {
-    throw runtime_error("Unexcepted token.");
+    throw runtime_error("Parse LiteralProperty: Unexcepted token.");
   }
   return delegate.CreateIdentifier(token);
 }

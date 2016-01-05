@@ -70,6 +70,7 @@ enum {
   MemberExpression,
   CallExpression,
   AssignmentExpression,
+  ObjectExpression,
   SequenceExpression,
   BinaryExpression,
   FunctionExpression,
@@ -99,6 +100,37 @@ struct Expression: SyntaxTreeNode {
 
 struct Literal: Expression {
   /* Just an interface */
+};
+
+struct NumericLiteral: Literal {
+  Number value;
+  NumericLiteral() {
+    type = SyntaxTreeNodeType::NumericLiteral;
+  }
+  int Execute() override;
+};
+
+struct StringLiteral: Literal {
+  String value;
+  StringLiteral() {
+    type = SyntaxTreeNodeType::StringLiteral;
+  }
+  int Execute() override;
+};
+
+struct BooleanLiteral: Literal {
+  bool value;
+  BooleanLiteral() {
+    type = SyntaxTreeNodeType::BooleanLiteral;
+  }
+  int Execute() override;
+};
+
+struct NullLiteral: Literal {
+  NullLiteral() {
+    type = SyntaxTreeNodeType::NullLiteral;
+  }
+  int Execute() override;
 };
 
 struct Identifier: Expression {
@@ -145,6 +177,16 @@ struct AssignmentExpression: Expression {
   int Execute() override;
 };
 
+struct ObjectExpression: Expression {
+  std::vector<std::pair<StringLiteral*, Expression*>> properties;
+  ObjectExpression() {
+    type = SyntaxTreeNodeType::ObjectExpression;
+  }
+  int Execute() override {
+    return 0;
+  }
+};
+
 struct SequenceExpression: Expression {
   std::vector<Expression *> expressions;
   SequenceExpression() {
@@ -159,37 +201,6 @@ struct BinaryExpression: Expression {
   Expression* right;
   BinaryExpression() {
     type = SyntaxTreeNodeType::BinaryExpression;
-  }
-  int Execute() override;
-};
-
-struct NumericLiteral: Literal {
-  Number value;
-  NumericLiteral() {
-    type = SyntaxTreeNodeType::NumericLiteral;
-  }
-  int Execute() override;
-};
-
-struct StringLiteral: Literal {
-  String value;
-  StringLiteral() {
-    type = SyntaxTreeNodeType::StringLiteral;
-  }
-  int Execute() override;
-};
-
-struct BooleanLiteral: Literal {
-  bool value;
-  BooleanLiteral() {
-    type = SyntaxTreeNodeType::BooleanLiteral;
-  }
-  int Execute() override;
-};
-
-struct NullLiteral: Literal {
-  NullLiteral() {
-    type = SyntaxTreeNodeType::NullLiteral;
   }
   int Execute() override;
 };
@@ -289,6 +300,7 @@ public:
   CallExpression* CreateCallExpression(Expression* expr, std::vector<Expression*> args);
   AssignmentExpression* CreateAssignmentExpression(String op, Expression* left,
                                                               Expression* right);
+  ObjectExpression* CreateObjectExpression(std::vector<std::pair<StringLiteral*, Expression*>> properties);
   SequenceExpression* CreateSequenceExpression(std::vector<Expression*> expressions);
   BinaryExpression* CreateBinaryExpression(String op, Expression* left,
                                                       Expression* right);
@@ -332,6 +344,7 @@ public:
   Expression* ParseComputedProperty();
   std::vector<Expression*> ParseArguments();
   Expression* ParsePostfixExpression();
+  Expression* ParseObjectExpression();
   Expression* ParseBinaryExpression();
   Expression* ParseAssignmentExpression();
   Expression* ParseFunctionExpression();
