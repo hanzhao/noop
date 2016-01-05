@@ -157,6 +157,10 @@ ostream& operator <<(ostream& _out, SyntaxTreeNode* node) {
     }
     _out << " }";
     break;
+  case SyntaxTreeNodeType::ArrayExpression:
+    _out << "ArrayExpression { elements: " << ((ArrayExpression*)node)->elements <<
+    " }";
+    break;
   case SyntaxTreeNodeType::AssignmentExpression:
     _out << "AssignmentExpressionNode { left: " << ((AssignmentExpression*)node)->left <<
     ", _operator: " << ((AssignmentExpression*)node)->_operator << ", right: " <<
@@ -305,6 +309,12 @@ AssignmentExpression* SyntaxTree::CreateAssignmentExpression(String op,
 ObjectExpression* SyntaxTree::CreateObjectExpression(vector<pair<StringLiteral*, Expression*>> properties) {
   ObjectExpression* node = new ObjectExpression();
   node->properties = properties;
+  return node;
+}
+
+ArrayExpression* SyntaxTree::CreateArrayExpression(vector<Expression*> elements) {
+  ArrayExpression* node = new ArrayExpression();
+  node->elements = elements;
   return node;
 }
 
@@ -772,6 +782,23 @@ Expression* Parser::ParseObjectExpression() {
   return delegate.CreateObjectExpression(properties);
 }
 
+Expression* Parser::ParseArrayExpression() {
+  Lex(); // [
+  vector<Expression*> elements;
+  while (!IsPunctuation(U"]")) {
+    // value
+    Expression* element = ParsePrimaryExpression();
+    elements.push_back(element);
+    if (!IsPunctuation(U"]")) {
+      // ,
+      assert(IsPunctuation(U","));
+      Lex();
+    }
+  }
+  Lex(); // ]
+  return delegate.CreateArrayExpression(elements);
+}
+
 Expression* Parser::ParsePrimaryExpression() {
   int type = look_ahead->type;
   if (type == TokenType::Identifier) {
@@ -792,9 +819,9 @@ Expression* Parser::ParsePrimaryExpression() {
   if (type == TokenType::Punctuator) {
     if (IsPunctuation(U"{")) {
       return ParseObjectExpression();
-    } // else if (IsPunctuation("[")) {
-      // return ParseArrayExpression();
-    // }
+    } else if (IsPunctuation(U"[")) {
+      return ParseArrayExpression();
+    }
   }
   throw runtime_error("Parse PrimaryExpression: Unexcepted token.");
 }

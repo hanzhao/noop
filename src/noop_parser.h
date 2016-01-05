@@ -71,6 +71,7 @@ enum {
   CallExpression,
   AssignmentExpression,
   ObjectExpression,
+  ArrayExpression,
   SequenceExpression,
   BinaryExpression,
   FunctionExpression,
@@ -181,6 +182,16 @@ struct ObjectExpression: Expression {
   std::vector<std::pair<StringLiteral*, Expression*>> properties;
   ObjectExpression() {
     type = SyntaxTreeNodeType::ObjectExpression;
+  }
+  int Execute() override {
+    return 0;
+  }
+};
+
+struct ArrayExpression: Expression {
+  std::vector<Expression*> elements;
+  ArrayExpression() {
+    type = SyntaxTreeNodeType::ArrayExpression;
   }
   int Execute() override {
     return 0;
@@ -301,6 +312,7 @@ public:
   AssignmentExpression* CreateAssignmentExpression(String op, Expression* left,
                                                               Expression* right);
   ObjectExpression* CreateObjectExpression(std::vector<std::pair<StringLiteral*, Expression*>> properties);
+  ArrayExpression* CreateArrayExpression(std::vector<Expression*> elements);
   SequenceExpression* CreateSequenceExpression(std::vector<Expression*> expressions);
   BinaryExpression* CreateBinaryExpression(String op, Expression* left,
                                                       Expression* right);
@@ -345,6 +357,7 @@ public:
   std::vector<Expression*> ParseArguments();
   Expression* ParsePostfixExpression();
   Expression* ParseObjectExpression();
+  Expression* ParseArrayExpression();
   Expression* ParseBinaryExpression();
   Expression* ParseAssignmentExpression();
   Expression* ParseFunctionExpression();
