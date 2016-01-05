@@ -212,11 +212,14 @@ typedef std::vector<Object*> VecObjp;
 class Pool {
 public:
   VecObjp pool;
+  vector<size_t> collect;
+  vector<bool> mk;
   Pool();
   Pool(Context* global);
-  size_t AddToPool(Object *objp);
+  size_t Add(Object *objp);
+  void sweep(size_t sw);
 };
-Pool* MemPool = NULL;
+Pool* pool = NULL;
 void* pool_head;
 }
 #endif

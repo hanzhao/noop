@@ -28,30 +28,33 @@ public:
   Pool(Context* global)
   {
     Object* undefined_obj = new UndefinedObject();
-    AddToPool(undefined_obj);
+    Add(undefined_obj);
     /* console.log */
     Object* console = new Object(ObjectType::Object);
     Object* console_log = new NativeFunctionObject(U"log", Bindings::ConsoleLog);
     Object* console_read = new NativeFunctionObject(U"read", Bindings::ConsoleRead);
-    console->properties[U"log"] = AddToPool(console_log);
-    console->properties[U"read"] = AddToPool(console_read);
-    global->var_table[U"console"] = AddToPool(console);
+    console->properties[U"log"] = Add(console_log);
+    console->properties[U"read"] = Add(console_read);
+    global->var_table[U"console"] = Add(console);
     /* parseFloat */
     Object* parse_float = new NativeFunctionObject(U"parseFloat", Bindings::ParseFloat);
-    global->var_table[U"parseFloat"] = AddToPool(parse_float);
+    global->var_table[U"parseFloat"] = Add(parse_float);
     /* parseInt */
     Object* parse_int = new NativeFunctionObject(U"parseInt", Bindings::ParseInt);
-    global->var_table[U"parseInt"] = AddToPool(parse_int);
+    global->var_table[U"parseInt"] = Add(parse_int);
     /* eval */
     Object* eval = new NativeFunctionObject(U"eval", Bindings::Eval);
-    global->var_table[U"eval"] = AddToPool(eval);
+    global->var_table[U"eval"] = Add(eval);
     return;
   }
-  size_t AddToPool(Object *objp) {
+  size_t Add(Object *objp) {
     pool.push_back(objp);
     return pool.size() - 1;
   }
   Object* At(size_t pos) {
+    return pool[pos];
+  }
+  Object* & operator [] (const size_t &pos) {
     return pool[pos];
   }
 };

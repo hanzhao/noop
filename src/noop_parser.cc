@@ -1059,17 +1059,17 @@ Program* Parser::ParseProgram(String code) {
 SyntaxTree delegate;
 
 bool IsFalse(int pos) {
-  if ((MemPool.At(pos)->type == ObjectType::BooleanObject) &&
-      (!(((BooleanObject*)MemPool.At(pos))->value))) {
+  if ((pool.At(pos)->type == ObjectType::BooleanObject) &&
+      (!(((BooleanObject*)pool.At(pos))->value))) {
     return true;
   }
-  if (MemPool.At(pos)->type == ObjectType::NullObject ||
-      MemPool.At(pos)->type == ObjectType::UndefinedObject ||
-      MemPool.At(pos)->type == ObjectType::NaNObject) {
+  if (pool.At(pos)->type == ObjectType::NullObject ||
+      pool.At(pos)->type == ObjectType::UndefinedObject ||
+      pool.At(pos)->type == ObjectType::NaNObject) {
     return true;
   }
-  if ((MemPool.At(pos)->type == ObjectType::NumericObject) &&
-      (!(((NumericObject*)MemPool.At(pos))->value))) {
+  if ((pool.At(pos)->type == ObjectType::NumericObject) &&
+      (!(((NumericObject*)pool.At(pos))->value))) {
     return true;
   }
   return false;
@@ -1086,7 +1086,7 @@ void PrintVarTable() {
   DEBUG << "========Current Variable Table========" << endl;
   for (auto& entry: current_context->var_table) {
     String str;
-    if (MemPool.At(entry.second)->ToString(str)) {
+    if (pool.At(entry.second)->ToString(str)) {
       DEBUG << entry.first << ": " << str << endl;
     } else {
       DEBUG << entry.first << ": " << "[Object object]" << endl;
@@ -1101,7 +1101,7 @@ int VariableDeclarator::Execute() {
   } else {
     current_context->var_table[id->name] = init->Execute();
     DEBUG << id->name << " is set to " <<
-             MemPool.At(current_context->var_table[id->name]) << endl;
+             pool.At(current_context->var_table[id->name]) << endl;
   }
   PrintVarTable();
   return 0;
@@ -1173,7 +1173,7 @@ int MemberExpression::Execute() {
   }
   if (res == 0)
     throw runtime_error("Can not find property " + Encoding::UTF32ToUTF8(((Identifier*)right)->name) + " of undefined");
-  return MemPool.At(res)->JumpToProperty(((Identifier*)right)->name);
+  return pool.At(res)->JumpToProperty(((Identifier*)right)->name);
 }
 
 int CallExpression::Execute() {
@@ -1183,15 +1183,15 @@ int CallExpression::Execute() {
   DEBUG << "Function call: switching context " << old_context <<
     " to " << current_context << endl;
   /* Special NativeFunctionObject */
-  if (MemPool.At(callee_pos)->type == ObjectType::NativeFunctionObject) {
-    DEBUG << "Call native function: " << ((NativeFunctionObject*)MemPool.At(callee_pos))->name << endl;
+  if (pool.At(callee_pos)->type == ObjectType::NativeFunctionObject) {
+    DEBUG << "Call native function: " << ((NativeFunctionObject*)pool.At(callee_pos))->name << endl;
     vector<Object*> args;
     for (auto& arg: arguments) {
-      args.push_back(MemPool.At(arg->Execute()));
+      args.push_back(pool.At(arg->Execute()));
     }
-    ret = (*(((NativeFunctionObject*)MemPool.At(callee_pos))->function))(args);
-  } else if (MemPool.At(callee_pos)->type == ObjectType::FunctionObject) {
-    std::vector<String> params = ((FunctionObject*)MemPool.At(callee_pos))->params;
+    ret = (*(((NativeFunctionObject*)pool.At(callee_pos))->function))(args);
+  } else if (pool.At(callee_pos)->type == ObjectType::FunctionObject) {
+    std::vector<String> params = ((FunctionObject*)pool.At(callee_pos))->params;
     for (size_t i = 0; i < params.size(); ++i) {
       if (i >= arguments.size()) {
         Object *res = new UndefinedObject();
@@ -1201,7 +1201,7 @@ int CallExpression::Execute() {
         current_context->var_table[params[i]] = arguments[i]->Execute();
       }
     }
-    ret = ((FunctionObject*)MemPool.At(callee_pos))->function->Execute();
+    ret = ((FunctionObject*)pool.At(callee_pos))->function->Execute();
   } else {
     throw runtime_error("Callee is not a function");
   }
@@ -1217,8 +1217,8 @@ int AssignmentExpression::Execute() {
     DEBUG << "Find " << ((Identifier*)left)->name << ": " << id << endl;
     if (id > 0) {
       // found
-      MemPool.At(id) = MemPool.At(right->Execute());
-      DEBUG << ((Identifier*)left)->name << " is set to " << MemPool(id) << endl;
+      pool.At(id) = pool.At(right->Execute());
+      DEBUG << ((Identifier*)left)->name << " is set to " << pool(id) << endl;
     } else {
       // not found
       throw runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
@@ -1227,8 +1227,8 @@ int AssignmentExpression::Execute() {
   }
   else if (left->type == SyntaxTreeNodeType::MemberExpression) {
     int id = left->Execute(), right_id = right->Execute();
-    MemPool.At(id) = MemPool.At(right_id);
-    DEBUG << "Left MemberExpression is set to " << MemPool.At(id) << endl;
+    pool.At(id) = pool.At(right_id);
+    DEBUG << "Left MemberExpression is set to " << pool.At(id) << endl;
   }
   PrintVarTable();
   return 0;
@@ -1245,11 +1245,11 @@ int BinaryExpression::Execute() {
   int left_pos = left->Execute();
   int right_pos = right->Execute();
   if (_operator == U"+") {
-    if (MemPool.At(left_pos)->type == ObjectType::StringObject ||
-        MemPool.At(right_pos)->type == ObjectType::StringObject) {
+    if (pool.At(left_pos)->type == ObjectType::StringObject ||
+        pool.At(right_pos)->type == ObjectType::StringObject) {
       String left_value, right_value;
-      if ((!MemPool.At(left_pos)->ToString(left_value)) ||
-          (!MemPool.At(right_pos)->ToString(right_value))) {
+      if ((!pool.At(left_pos)->ToString(left_value)) ||
+          (!pool.At(right_pos)->ToString(right_value))) {
         Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
@@ -1259,11 +1259,11 @@ int BinaryExpression::Execute() {
       );
       pool.push_back(res);
       return pool.size() - 1;
-    } else if (MemPool.At(left_pos)->type == ObjectType::NumericObject ||
-               MemPool.At(right_pos)->type == ObjectType::NumericObject) {
+    } else if (pool.At(left_pos)->type == ObjectType::NumericObject ||
+               pool.At(right_pos)->type == ObjectType::NumericObject) {
       Number left_value, right_value;
-      if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-          (!MemPool.At(right_pos)->ToNumber(right_value))) {
+      if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+          (!pool.At(right_pos)->ToNumber(right_value))) {
         Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
@@ -1276,8 +1276,8 @@ int BinaryExpression::Execute() {
     }
   } else if (_operator == U"-") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1289,8 +1289,8 @@ int BinaryExpression::Execute() {
     return pool.size() - 1;
   } else if (_operator == U"*") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1302,8 +1302,8 @@ int BinaryExpression::Execute() {
     return pool.size() - 1;
   } else if (_operator == U"/") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1315,8 +1315,8 @@ int BinaryExpression::Execute() {
     return pool.size() - 1;
   } else if (_operator == U"%") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1332,8 +1332,8 @@ int BinaryExpression::Execute() {
     }
   } else if (_operator == U"<<") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1349,8 +1349,8 @@ int BinaryExpression::Execute() {
     }
   } else if (_operator == U">>") {
     Number left_value, right_value;
-    if ((!MemPool.At(left_pos)->ToNumber(left_value)) ||
-        (!MemPool.At(right_pos)->ToNumber(right_value))) {
+    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
+        (!pool.At(right_pos)->ToNumber(right_value))) {
       Object *res = new NaNObject();
       pool.push_back(res);
       return pool.size() - 1;
@@ -1369,11 +1369,11 @@ int BinaryExpression::Execute() {
       Object *res = new BooleanObject(true);
       pool.push_back(res);
       return pool.size() - 1;
-    } else if (MemPool.At(left_pos)->type == ObjectType::StringObject ||
-        MemPool.At(right_pos)->type == ObjectType::StringObject) {
+    } else if (pool.At(left_pos)->type == ObjectType::StringObject ||
+        pool.At(right_pos)->type == ObjectType::StringObject) {
       String left_value, right_value;
-      if ((!MemPool.At(left_pos)->ToString(left_value)) ||
-          (!MemPool.At(right_pos)->ToString(right_value))) {
+      if ((!pool.At(left_pos)->ToString(left_value)) ||
+          (!pool.At(right_pos)->ToString(right_value))) {
         Object *res = new NaNObject();
         pool.push_back(res);
         return pool.size() - 1;
