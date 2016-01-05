@@ -2,8 +2,10 @@
 #define NOOP_PARSER_H
 
 #include <noop.h>
+#include <noop_io.h>
 #include <noop_context.h>
 
+#include <sstream>
 #include <vector>
 
 namespace noop {
@@ -90,7 +92,18 @@ enum {
 /* Just an interface */
 struct SyntaxTreeNode {
   int type;
+  String node_id;
+  static size_t node_id_;
   virtual int Execute() = 0;
+  SyntaxTreeNode() {
+    std::string _tmp = "";
+    std::stringstream sio;
+    sio << ".node_" << node_id_;
+    sio >> _tmp;
+    node_id = Encoding::UTF8ToUTF32(_tmp);
+    DEBUG << "[id] " << node_id << std::endl;
+    ++node_id_;
+  }
 };
 
 /* SyntaxTreeNode */

@@ -18,6 +18,8 @@ namespace noop {
 
 Context* current_context = global_context;
 
+size_t SyntaxTreeNode::node_id_ = 0;
+
 /* I/O Helper */
 
 ostream& operator <<(ostream& _out, Token* token) {
@@ -250,6 +252,9 @@ ostream& operator <<(ostream& _out, Object* obj) {
     break;
   case ObjectType::NaNObject:
     _out << "NaNObject { }";
+    break;
+  case ObjectType::ArrayObject:
+    _out << "ArrayObject { }";
     break;
   case ObjectType::BlackMagicObject:
     _out << "BlackMagicObject { }";
@@ -658,12 +663,12 @@ void Parser::Peek() {
 Token* Parser::Lex() {
   Token* token = look_ahead;
   index = token->end;
-  DEBUG << "Token before LookAhead" << look_ahead << endl;
-  DEBUG << "Index before LookAhead: " << token->end << endl;
+  // DEBUG << "Token before LookAhead" << look_ahead << endl;
+  // DEBUG << "Index before LookAhead: " << token->end << endl;
   look_ahead = LookAhead();
   index = token->end;
-  DEBUG << "Token after LookAhead" << look_ahead << endl;
-  DEBUG << "Index after LookAhead: " << token->end << endl;
+  // DEBUG << "Token after LookAhead" << look_ahead << endl;
+  // DEBUG << "Index after LookAhead: " << token->end << endl;
   return token;
 }
 
@@ -1104,7 +1109,7 @@ int VariableDeclarator::Execute() {
     DEBUG << id->name << " is set to " <<
              pool[current_context->var_table[id->name]] << endl;
   }
-  PrintVarTable();
+  // PrintVarTable();
   return 0;
 }
 
@@ -1186,7 +1191,7 @@ int CallExpression::Execute() {
     DEBUG << "Call native function: " << ((NativeFunctionObject*)pool[callee_pos])->name << endl;
     vector<Object*> args;
     for (auto& arg: arguments) {
-      args.push_back(pool[arg->Execute())];
+      args.push_back(pool[arg->Execute()]);
     }
     ret = (*(((NativeFunctionObject*)pool[callee_pos])->function))(args);
   } else if (pool[callee_pos]->type == ObjectType::FunctionObject) {
@@ -1206,18 +1211,20 @@ int CallExpression::Execute() {
     " to " << old_context << endl;
   delete current_context;
   current_context = old_context;
-  pool.GC();
+  // XXX: Function ret need an reference to avoiding gc
+  current_context->var_table[U".ret" + node_id] = ret;
+  pool.CollectGarbage();
   return ret;
 }
 
 int AssignmentExpression::Execute() {
   if (left->type == SyntaxTreeNodeType::Identifier) {
     size_t id = current_context->LookUp(((Identifier*)left)->name);
-    DEBUG << "Find " << ((Identifier*)left)->name << ": " << id << endl;
+    // DEBUG << "Find " << ((Identifier*)left)->name << ": " << id << endl;
     if (id > 0) {
       // found
       pool[id] = pool[right->Execute()];
-      DEBUG << ((Identifier*)left)->name << " is set to " << MemPool(id) << endl;
+      DEBUG << ((Identifier*)left)->name << " is set to " << pool[id] << endl;
     } else {
       // not found
       throw runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
@@ -1229,7 +1236,7 @@ int AssignmentExpression::Execute() {
     pool[id] = pool[right_id];
     DEBUG << "Left MemberExpression is set to " << pool[id] << endl;
   }
-  PrintVarTable();
+  // PrintVarTable();
   return 0;
 }
 
@@ -1544,20 +1551,28 @@ int WhileStatement::Execute() {
 }
 
 int NumericLiteral::Execute() {
-  return pool.Add(new NumericObject(value));
+  int idx = pool.Add(new NumericObject(value));
+  current_context->var_table[node_id] = idx;
+  return idx;
 }
 
 int StringLiteral::Execute() {
-  return pool.Add(new StringObject(value));
+  int idx = pool.Add(new StringObject(value));
+  current_context->var_table[node_id] = idx;
+  return idx;
 }
 
 int BooleanLiteral::Execute() {
-  return pool.Add(new BooleanObject(value));
+  int idx = pool.Add(new BooleanObject(value));
+  current_context->var_table[node_id] = idx;
+  return idx;
 }
 
 
 int NullLiteral::Execute() {
-  return pool.Add(new NullObject());
+  int idx = pool.Add(new NullObject());
+  current_context->var_table[node_id] = idx;
+  return idx;
 }
 
 int IfStatement::Execute() {

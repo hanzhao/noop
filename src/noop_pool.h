@@ -2,6 +2,7 @@
 #define NOOP_POOL_H
 
 #include <cassert>
+#include <queue>
 #include <stdexcept>
 #include <string>
 #include <sstream>
@@ -36,6 +37,7 @@ extern void* pool_head;
 struct Object {
   int type;
   bool mark;
+  virtual ~Object() { }
   virtual bool ToNumber(Number& res) { res = 0; return false; }
   virtual bool ToString(String& res) {
     if (properties.size() == 0) {
@@ -74,7 +76,8 @@ struct UndefinedObject: Object {
     res = U"undefined";
     return true;
   }
-  UndefinedObject():Object(ObjectType::UndefinedObject) {}
+  UndefinedObject(): Object(ObjectType::UndefinedObject) {}
+  ~UndefinedObject() override {}
 };
 
 struct StringObject: Object {
@@ -94,6 +97,7 @@ struct StringObject: Object {
     return true;
   }
   StringObject(String value):Object(ObjectType::StringObject), value(value) {}
+  ~StringObject() override {}
 };
 
 struct NumericObject: Object {
@@ -112,6 +116,7 @@ struct NumericObject: Object {
     return true;
   }
   NumericObject(Number value):Object(ObjectType::NumericObject), value(value) {}
+  ~NumericObject() override {}
 };
 
 struct BooleanObject: Object {
@@ -129,6 +134,7 @@ struct BooleanObject: Object {
     return true;
   }
   BooleanObject(bool value):Object(ObjectType::BooleanObject), value(value) {}
+  ~BooleanObject() override {}
 };
 
 struct NullObject: Object {
@@ -141,6 +147,7 @@ struct NullObject: Object {
     return true;
   }
   NullObject():Object(ObjectType::NullObject) { }
+  ~NullObject() override {}
 };
 
 struct NaNObject: Object {
@@ -152,7 +159,8 @@ struct NaNObject: Object {
     res = U"NaN";
     return true;
   }
-  NaNObject():Object(ObjectType::NaNObject) { }
+  NaNObject(): Object(ObjectType::NaNObject) { }
+  ~NaNObject() override {}
 };
 
 struct FunctionObject: Object {
@@ -167,7 +175,8 @@ struct FunctionObject: Object {
     res = U"function " + name + U"() { [code] }";
     return true;
   }
-  FunctionObject(String name, BlockStatement* function, std::vector<String> params):Object(ObjectType::FunctionObject), name(name), function(function), params(params) {}
+  FunctionObject(String name, BlockStatement* function, std::vector<String> params): Object(ObjectType::FunctionObject), name(name), function(function), params(params) {}
+  ~FunctionObject() override {}
 };
 
 struct ArrayObject: Object {
@@ -181,6 +190,7 @@ struct ArrayObject: Object {
     String value = U"";
     bool flag = false;
     for (auto& e: elements) {
+      DEBUG << "hehehe" << ((std::vector<Object*>*)pool_head) << "pppp";
       if ((*((((std::vector<Object*>*)pool_head)->begin()) + e))->ToString(value)) {
         if (flag) { res += U", "; }
         res += value;
@@ -192,7 +202,8 @@ struct ArrayObject: Object {
     res += U" ]";
     return true;
   }
-  ArrayObject(std::vector<int> elements) : Object(ObjectType::ArrayObject), elements(elements) { }
+  ArrayObject(std::vector<int> elements) : Object(ObjectType::ArrayObject), elements(elements) {}
+  ~ArrayObject() override {}
 };
 
 struct NativeFunctionObject: Object {
@@ -207,24 +218,27 @@ struct NativeFunctionObject: Object {
     return true;
   }
   NativeFunctionObject(String name,int (*function)(const std::vector<Object*>)):Object(ObjectType::NativeFunctionObject), name(name), function(function) {}
+  ~NativeFunctionObject() override {}
 };
 
-typedef std::vector<Object*> VecObjp;
-class Pool {
-public:
-  Context* global_context;
-  VecObjp pool;
-  std::vector<size_t> collect;
-  std::vector<bool> mk;
-  Pool();
+struct Pool {
+  Context* global_;
+  std::vector<Object*>* pool;
+  std::queue<size_t> collected;
+  Pool() {};
   Pool(Context* global);
-  size_t Add(Object *objp);
-  void Sweep(size_t sw);
-  Object* At(size_t pos);
+  size_t Add(Object* obj);
+  void CollectGarbage();
+  void Sweep();
+  void Mark(Context* ctx);
   void MarkObject(size_t id);
-  Object* & operator [] (const size_t &pos);
+  Object* &operator [] (const size_t pos) {
+    return (*pool)[pos];
+  }
 };
+
 extern Pool pool;
-void* pool_head;
-}
+
+} // namespace noop
+
 #endif

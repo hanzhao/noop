@@ -7,4 +7,5 @@ function fib(x) {
     0;
   }
 }
-console.log('The 10th num of fibnacci is: ' + fib(10));
+var n = parseInt(console.read())
+console.log('The ', n, 'th num of fibnacci is: ', fib(n));
