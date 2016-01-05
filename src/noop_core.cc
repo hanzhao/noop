@@ -81,7 +81,7 @@ int REPL() {
       // $1 = ???
       global_context->var_table[id] = ret;
       // _ = ???
-      global_context->var_table[U"_"] = ret;
+      global_context->var_table[U"$_"] = ret;
       STDOUT << id << " = " << str << endl;
     } catch (runtime_error& e) {
       STDOUT << "Runtime Error: " << e.what() << endl;
