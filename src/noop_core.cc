@@ -92,5 +92,20 @@ int REPL() {
   return 0;
 }
 
+int Print(String code) {
+  noop::PoolInit(pool, global_context);
+  int ret = Parser().ParseProgram(code)->Execute();
+  String str = U"";
+  pool[ret]->ToString(str);
+  STDOUT << str << endl;
+  return 0;
+}
+
+int Eval(String code) {
+  noop::PoolInit(pool, global_context);
+  Parser().ParseProgram(code)->Execute();
+  return 0;
+}
+
 } // Core
 } // noop

@@ -3,11 +3,15 @@
 
 #include <string>
 
+#include <noop_io.h>
+
 namespace noop {
 namespace Core {
 
 int ExecuteFromFile(std::string script);
 int REPL();
+int Eval(String code);
+int Print(String code);
 
 } // namespace Core
 } // namespace noop

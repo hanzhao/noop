@@ -52,11 +52,9 @@ int main(int argc, const char* argv[]) {
       return noop::PrintVersion();
     }
     if (i < args.size() - 1 && arg == noop::Switches::kSwitchEval) {
-      /* TODO: Evaluate script. */
-      return 0;
+      return noop::Core::Eval(noop::Encoding::UTF8ToUTF32(args[i + 1]));
     } else if (i < args.size() - 1 && arg == noop::Switches::kSwitchPrint) {
-      /* TODO: Evaluate and print script. */
-      return 0;
+      return noop::Core::Print(noop::Encoding::UTF8ToUTF32(args[i + 1]));
     } else if (arg[0] == '-') {
       cout << "noop: bad option: " << arg << endl;
     } else {
