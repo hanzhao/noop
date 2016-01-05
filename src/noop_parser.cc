@@ -1177,7 +1177,20 @@ int MemberExpression::Execute() {
   }
   if (res == 0)
     throw runtime_error("Can not find property " + Encoding::UTF32ToUTF8(((Identifier*)right)->name) + " of undefined");
-  return pool[res]->JumpToProperty(((Identifier*)right)->name);
+  String property = U"";
+  int idx;
+  if (_operator == U".") {
+    if (right->type == SyntaxTreeNodeType::Identifier) {
+      property = ((Identifier*)right)->name;
+    } else {
+      throw runtime_error("Invalid property");
+    }
+  } else if (_operator == U"[") {
+    idx = right->Execute();
+    if (!pool[idx]->ToString(property))
+      throw runtime_error("Invalid property");
+  }
+  return pool[res]->JumpToProperty(property);
 }
 
 int CallExpression::Execute() {
@@ -1235,8 +1248,7 @@ int AssignmentExpression::Execute() {
       throw runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
         " is not defined");
     }
-  }
-  else if (left->type == SyntaxTreeNodeType::MemberExpression) {
+  } else if (left->type == SyntaxTreeNodeType::MemberExpression) {
     int id = left->Execute(), right_id = right->Execute();
     pool[id] = pool[right_id];
     DEBUG << "Left MemberExpression is set to " << pool[id] << endl;

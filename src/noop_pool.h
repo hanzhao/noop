@@ -63,7 +63,7 @@ struct Object {
   }
   std::unordered_map<String, size_t> properties;
   Object(int type):type(type) {}
-  size_t JumpToProperty(String pro);
+  virtual size_t JumpToProperty(String pro);
 };
 
 struct UndefinedObject: Object {
@@ -190,7 +190,6 @@ struct ArrayObject: Object {
     String value = U"";
     bool flag = false;
     for (auto& e: elements) {
-      DEBUG << "hehehe" << ((std::vector<Object*>*)pool_head) << "pppp";
       if ((*((((std::vector<Object*>*)pool_head)->begin()) + e))->ToString(value)) {
         if (flag) { res += U", "; }
         res += value;
@@ -204,6 +203,7 @@ struct ArrayObject: Object {
   }
   ArrayObject(std::vector<int> elements) : Object(ObjectType::ArrayObject), elements(elements) {}
   ~ArrayObject() override {}
+  size_t JumpToProperty(String pro) override;
 };
 
 struct NativeFunctionObject: Object {

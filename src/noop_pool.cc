@@ -15,7 +15,34 @@ size_t Object::JumpToProperty(String pro) {
   if (fd != properties.end())
     return fd->second;
   else {
-    return pool.Add(new UndefinedObject());
+    int idx = pool.Add(new UndefinedObject());
+    return (properties[pro] = idx);
+  }
+}
+
+size_t ArrayObject::JumpToProperty(String pro) {
+  // Array: idx?
+  std::string utf_8_pro = Encoding::UTF32ToUTF8(pro);
+  bool is_interger = true;
+  size_t idx = 0;
+  for (size_t i = 0; i < utf_8_pro.length(); ++i) {
+    if (utf_8_pro[i] < '0' || utf_8_pro[i] > '9') {
+      is_interger = false;
+      break;
+    } else {
+      idx = idx * 10 + (utf_8_pro[i] - '0');
+    }
+  }
+  if (is_interger) {
+    while (idx >= elements.size()) {
+      elements.push_back(pool.Add(new UndefinedObject()));
+    }
+    return elements[idx];
+  } else {
+    if (pro == U"length") {
+      return pool.Add(new NumericObject(elements.size()));
+    }
+    return Object::JumpToProperty(pro);
   }
 }
 
