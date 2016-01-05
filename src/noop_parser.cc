@@ -1238,7 +1238,7 @@ int SequenceExpression::Execute() {
   for (auto& expression: expressions) {
     expression->Execute();
   }
-  return 0;
+  return pool.size() - 1;
 }
 
 int BinaryExpression::Execute() {
