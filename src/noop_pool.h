@@ -35,6 +35,7 @@ extern void* pool_head;
 
 struct Object {
   int type;
+  bool mark;
   virtual bool ToNumber(Number& res) { res = 0; return false; }
   virtual bool ToString(String& res) {
     if (properties.size() == 0) {
@@ -205,21 +206,25 @@ struct NativeFunctionObject: Object {
     res = U"function " + name + U"() { [native code] }";
     return true;
   }
-  NativeFunctionObject(String name, int (*function)(const std::vector<Object*>)):Object(ObjectType::NativeFunctionObject), name(name), function(function) {}
+  NativeFunctionObject(String name,int (*function)(const std::vector<Object*>)):Object(ObjectType::NativeFunctionObject), name(name), function(function) {}
 };
 
 typedef std::vector<Object*> VecObjp;
 class Pool {
 public:
+  Context* global_context;
   VecObjp pool;
-  vector<size_t> collect;
-  vector<bool> mk;
+  std::vector<size_t> collect;
+  std::vector<bool> mk;
   Pool();
   Pool(Context* global);
   size_t Add(Object *objp);
-  void sweep(size_t sw);
+  void Sweep(size_t sw);
+  Object* At(size_t pos);
+  void MarkObject(size_t id);
+  Object* & operator [] (const size_t &pos);
 };
-Pool* pool = NULL;
+extern Pool pool;
 void* pool_head;
 }
 #endif

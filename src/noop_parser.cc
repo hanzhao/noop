@@ -1204,8 +1204,9 @@ int CallExpression::Execute() {
   }
   DEBUG << "Function call end: switching context " << current_context <<
     " to " << old_context << endl;
+  delete current_context;
   current_context = old_context;
-  pool.gc();
+  pool.GC();
   return ret;
 }
 

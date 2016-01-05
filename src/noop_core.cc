@@ -36,7 +36,7 @@ int ExecuteFromFile(string script) {
   DEBUG << "Read code: " << code << endl;
   DEBUG << "Code length: " << code.length() << endl;
 
-  MemPool = new Pool(global_context);
+  pool = Pool(global_context);
   Parser().ParseProgram(code)->Execute();
 
   /* For DEBUG
@@ -59,7 +59,7 @@ int REPL() {
   int ret;
   int seq = 0;
   noop::Console::InitializeHistory();
-  noop::PoolInit(pool, global_context);
+  noop::Pool(global_context);
   STDOUT << "noop v" << NOOP_VERSION_MAJOR << '.' <<
                        NOOP_VERSION_MINOR << '.' <<
                        NOOP_VERSION_PATCH << endl;

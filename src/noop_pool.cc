@@ -23,9 +23,11 @@ size_t Object::JumpToProperty(String pro) {
 class Pool {
 public:
   VecObj pool;
+  Context* global_context;
   Pool(){}
   Pool(Context* global)
   {
+    pool_head = &pool;
     Object* undefined_obj = new UndefinedObject();
     Add(undefined_obj);
     /* console.log */
@@ -44,6 +46,7 @@ public:
     /* eval */
     Object* eval = new NativeFunctionObject(U"eval", Bindings::Eval);
     global->var_table[U"eval"] = Add(eval);
+    global_context = global;
     return;
   }
   size_t Add(Object *objp) {
@@ -57,10 +60,44 @@ public:
   Object* & operator [] (const size_t &pos) {
     return pool[pos];
   }
-  void sweep(size_t sw) {
-    collect.push_back(sw);
+  void Sweep() {
+    for (size_t i = 0; i < pool.size(); ++ i) {
+      if (pool[i]->mark == 0) {
+        delete pool[i];
+        pool[i] = nullptr;
+      }
+    }
+  }
+  void GC() {
+    for (int i = 0; i < pool.size(); ++ i)
+      pool[i]->mark = false;
+    Mark(global_context);
+    Sweep();
+  }
+  void Mark(Context* MarkContext) {
+    for (auto &x : MarkContext->var_table) {
+      int id = x->second;
+      MarkObject(id);
+    }
+    for (int i = 0; i < MarkContext->child.size(); ++ i) {
+      Mark(MarkContext->child[i]);
+    }
+  }
+  void MarkObject(size_t id) {
+    if (pool[id]->mark == 1)
+      return ;
+    else
+      pool[id]->mark = 1;
+    if (pool[id]->type == ObjectType::ArrayObject) {
+      for (auto &e: elements) {
+        MarkObject(e);
+      }
+    }
+    for (auto &y : pool[id].properties) {
+      MarkObject(y.second);
+    }
   }
 
 };
-
+Pool pool;
 } // noop
