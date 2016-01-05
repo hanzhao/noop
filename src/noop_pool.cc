@@ -46,6 +46,33 @@ size_t ArrayObject::JumpToProperty(String pro) {
   }
 }
 
+size_t StringObject::JumpToProperty(String pro) {
+  // Array: idx?
+  std::string utf_8_pro = Encoding::UTF32ToUTF8(pro);
+  bool is_interger = true;
+  size_t idx = 0;
+  for (size_t i = 0; i < utf_8_pro.length(); ++i) {
+    if (utf_8_pro[i] < '0' || utf_8_pro[i] > '9') {
+      is_interger = false;
+      break;
+    } else {
+      idx = idx * 10 + (utf_8_pro[i] - '0');
+    }
+  }
+  if (is_interger) {
+    if (idx >= value.length()) {
+      return pool.Add(new UndefinedObject());
+    } else {
+      return pool.Add(new StringObject(value.substr(idx, 1)));
+    }
+  } else {
+    if (pro == U"length") {
+      return pool.Add(new NumericObject(value.length()));
+    }
+    return Object::JumpToProperty(pro);
+  }
+}
+
 Pool pool;
 void* pool_head;
 

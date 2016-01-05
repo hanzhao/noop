@@ -98,6 +98,7 @@ struct StringObject: Object {
   }
   StringObject(String value):Object(ObjectType::StringObject), value(value) {}
   ~StringObject() override {}
+  size_t JumpToProperty(String pro) override;
 };
 
 struct NumericObject: Object {
