@@ -1235,7 +1235,9 @@ int AssignmentExpression::Execute() {
 }
 
 int SequenceExpression::Execute() {
-  /* TODO */
+  for (auto& expression: expressions) {
+    expression->Execute();
+  }
   return 0;
 }
 
@@ -1707,4 +1709,26 @@ int FunctionExpression::Execute() {
   return pool.size() - 1;
 }
 
+int ObjectExpression::Execute() {
+  std::unordered_map<String, size_t> _properties;
+  for (auto& tmp: properties) {
+    _properties[tmp.first->value] =
+      tmp.second->Execute();
+  }
+  Object *res = new Object(ObjectType::Object);
+  res->properties = _properties;
+  pool.push_back(res);
+  return pool.size() - 1;
+}
+/*
+struct ObjectExpression: Expression {
+  std::vector<std::pair<StringLiteral*, Expression*>> properties;
+  ObjectExpression() {
+    type = SyntaxTreeNodeType::ObjectExpression;
+  }
+  int Execute() override {
+    return 0;
+  }
+};
+*/
 } // namespace noop

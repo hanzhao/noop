@@ -183,9 +183,7 @@ struct ObjectExpression: Expression {
   ObjectExpression() {
     type = SyntaxTreeNodeType::ObjectExpression;
   }
-  int Execute() override {
-    return 0;
-  }
+  int Execute() override;
 };
 
 struct ArrayExpression: Expression {
