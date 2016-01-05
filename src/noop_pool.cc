@@ -48,6 +48,7 @@ public:
   }
   size_t Add(Object *objp) {
     pool.push_back(objp);
+    mk.push_back(0);
     return pool.size() - 1;
   }
   Object* At(size_t pos) {
@@ -56,6 +57,10 @@ public:
   Object* & operator [] (const size_t &pos) {
     return pool[pos];
   }
+  void sweep(size_t sw) {
+    collect.push_back(sw);
+  }
+
 };
 
 } // noop
