@@ -15,8 +15,7 @@ size_t Object::JumpToProperty(String pro) {
   if (fd != properties.end())
     return fd->second;
   else {
-    pool.push_back(pool[0]);
-    return pool.size() - 1;
+    pool.Add(new UndefinedObject());
   }
 }
 

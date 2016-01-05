@@ -15,6 +15,7 @@ using namespace std;
 /* LL(1) parser for simplified JavaScript. */
 
 namespace noop {
+
 Context* current_context = global_context;
 
 /* I/O Helper */
@@ -1059,17 +1060,17 @@ Program* Parser::ParseProgram(String code) {
 SyntaxTree delegate;
 
 bool IsFalse(int pos) {
-  if ((pool.At(pos)->type == ObjectType::BooleanObject) &&
-      (!(((BooleanObject*)pool.At(pos))->value))) {
+  if ((pool[pos]->type == ObjectType::BooleanObject) &&
+      (!(((BooleanObject*)pool[pos])->value))) {
     return true;
   }
-  if (pool.At(pos)->type == ObjectType::NullObject ||
-      pool.At(pos)->type == ObjectType::UndefinedObject ||
-      pool.At(pos)->type == ObjectType::NaNObject) {
+  if (pool[pos]->type == ObjectType::NullObject ||
+      pool[pos]->type == ObjectType::UndefinedObject ||
+      pool[pos]->type == ObjectType::NaNObject) {
     return true;
   }
-  if ((pool.At(pos)->type == ObjectType::NumericObject) &&
-      (!(((NumericObject*)pool.At(pos))->value))) {
+  if ((pool[pos]->type == ObjectType::NumericObject) &&
+      (!(((NumericObject*)pool[pos])->value))) {
     return true;
   }
   return false;
@@ -1086,7 +1087,7 @@ void PrintVarTable() {
   DEBUG << "========Current Variable Table========" << endl;
   for (auto& entry: current_context->var_table) {
     String str;
-    if (pool.At(entry.second)->ToString(str)) {
+    if (pool[entry.second]->ToString(str)) {
       DEBUG << entry.first << ": " << str << endl;
     } else {
       DEBUG << entry.first << ": " << "[Object object]" << endl;
@@ -1101,7 +1102,7 @@ int VariableDeclarator::Execute() {
   } else {
     current_context->var_table[id->name] = init->Execute();
     DEBUG << id->name << " is set to " <<
-             pool.At(current_context->var_table[id->name]) << endl;
+             pool[current_context->var_table[id->name]] << endl;
   }
   PrintVarTable();
   return 0;
@@ -1155,9 +1156,7 @@ int ArrayExpression::Execute() {
   for (auto& element: elements) {
     _elements.push_back(element->Execute());
   }
-  ArrayObject* obj = new ArrayObject(_elements);
-  pool.push_back(obj);
-  return pool.size() - 1;
+  return pool.Add(new ArrayObject(_elements));
 }
 
 int ThisExpression::Execute() {
@@ -1173,7 +1172,7 @@ int MemberExpression::Execute() {
   }
   if (res == 0)
     throw runtime_error("Can not find property " + Encoding::UTF32ToUTF8(((Identifier*)right)->name) + " of undefined");
-  return pool.At(res)->JumpToProperty(((Identifier*)right)->name);
+  return pool[res]->JumpToProperty(((Identifier*)right)->name);
 }
 
 int CallExpression::Execute() {
@@ -1183,25 +1182,23 @@ int CallExpression::Execute() {
   DEBUG << "Function call: switching context " << old_context <<
     " to " << current_context << endl;
   /* Special NativeFunctionObject */
-  if (pool.At(callee_pos)->type == ObjectType::NativeFunctionObject) {
-    DEBUG << "Call native function: " << ((NativeFunctionObject*)pool.At(callee_pos))->name << endl;
+  if (pool[callee_pos]->type == ObjectType::NativeFunctionObject) {
+    DEBUG << "Call native function: " << ((NativeFunctionObject*)pool[callee_pos])->name << endl;
     vector<Object*> args;
     for (auto& arg: arguments) {
-      args.push_back(pool.At(arg->Execute()));
+      args.push_back(pool[arg->Execute())];
     }
-    ret = (*(((NativeFunctionObject*)pool.At(callee_pos))->function))(args);
-  } else if (pool.At(callee_pos)->type == ObjectType::FunctionObject) {
-    std::vector<String> params = ((FunctionObject*)pool.At(callee_pos))->params;
+    ret = (*(((NativeFunctionObject*)pool[callee_pos])->function))(args);
+  } else if (pool[callee_pos]->type == ObjectType::FunctionObject) {
+    std::vector<String> params = ((FunctionObject*)pool[callee_pos])->params;
     for (size_t i = 0; i < params.size(); ++i) {
       if (i >= arguments.size()) {
-        Object *res = new UndefinedObject();
-        pool.push_back(res);
-        current_context->var_table[params[i]] = pool.size() - 1;
+        current_context->var_table[params[i]] = pool.Add(new UndefinedObject());
       } else {
         current_context->var_table[params[i]] = arguments[i]->Execute();
       }
     }
-    ret = ((FunctionObject*)pool.At(callee_pos))->function->Execute();
+    ret = ((FunctionObject*)pool[callee_pos])->function->Execute();
   } else {
     throw runtime_error("Callee is not a function");
   }
@@ -1217,8 +1214,8 @@ int AssignmentExpression::Execute() {
     DEBUG << "Find " << ((Identifier*)left)->name << ": " << id << endl;
     if (id > 0) {
       // found
-      pool.At(id) = pool.At(right->Execute());
-      DEBUG << ((Identifier*)left)->name << " is set to " << pool(id) << endl;
+      pool[id] = pool[right->Execute()];
+      DEBUG << ((Identifier*)left)->name << " is set to " << MemPool(id) << endl;
     } else {
       // not found
       throw runtime_error(Encoding::UTF32ToUTF8(((Identifier*)left)->name) +
@@ -1227,222 +1224,161 @@ int AssignmentExpression::Execute() {
   }
   else if (left->type == SyntaxTreeNodeType::MemberExpression) {
     int id = left->Execute(), right_id = right->Execute();
-    pool.At(id) = pool.At(right_id);
-    DEBUG << "Left MemberExpression is set to " << pool.At(id) << endl;
+    pool[id] = pool[right_id];
+    DEBUG << "Left MemberExpression is set to " << pool[id] << endl;
   }
   PrintVarTable();
   return 0;
 }
 
 int SequenceExpression::Execute() {
+  int ret = 0;
   for (auto& expression: expressions) {
-    expression->Execute();
+    ret = expression->Execute();
   }
-  return pool.size() - 1;
+  return ret;
 }
 
 int BinaryExpression::Execute() {
   int left_pos = left->Execute();
   int right_pos = right->Execute();
   if (_operator == U"+") {
-    if (pool.At(left_pos)->type == ObjectType::StringObject ||
-        pool.At(right_pos)->type == ObjectType::StringObject) {
+    if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
       String left_value, right_value;
-      if ((!pool.At(left_pos)->ToString(left_value)) ||
-          (!pool.At(right_pos)->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        return pool.Add(new NaNObject());
       };
-      Object *res = new StringObject(
-        left_value + right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
-    } else if (pool.At(left_pos)->type == ObjectType::NumericObject ||
-               pool.At(right_pos)->type == ObjectType::NumericObject) {
+      return pool.Add(new StringObject(left_value + right_value));
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
-      if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-          (!pool.At(right_pos)->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        return pool.Add(new NaNObject());
       };
-      Object *res = new NumericObject(
+      return pool.Add(new NumericObject(
         left_value + right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U"-") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
-    Object *res = new NumericObject(
+    return pool.Add(new NumericObject(
       left_value - right_value
-    );
-    pool.push_back(res);
-    return pool.size() - 1;
+    ));
   } else if (_operator == U"*") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
-    Object *res = new NumericObject(
+    return pool.Add(new NumericObject(
       left_value * right_value
-    );
-    pool.push_back(res);
-    return pool.size() - 1;
+    ));
   } else if (_operator == U"/") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
-    Object *res = new NumericObject(
+    return pool.Add(new NumericObject(
       left_value / right_value
-    );
-    pool.push_back(res);
-    return pool.size() - 1;
+    ));
   } else if (_operator == U"%") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
     if (IsInt(left_value) && IsInt(left_value)) {
-      Object *res = new NumericObject(
+      return pool.Add(new NumericObject(
         (int)(left_value) % (int)(right_value)
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else {
       return left_pos;
     }
   } else if (_operator == U"<<") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
     if (IsInt(left_value) && IsInt(left_value)) {
-      Object *res = new NumericObject(
+      return pool.Add(new NumericObject(
         (int)(left_value) << (int)(right_value)
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else {
       return left_pos;
     }
   } else if (_operator == U">>") {
     Number left_value, right_value;
-    if ((!pool.At(left_pos)->ToNumber(left_value)) ||
-        (!pool.At(right_pos)->ToNumber(right_value))) {
-      Object *res = new NaNObject();
-      pool.push_back(res);
-      return pool.size() - 1;
+    if ((!pool[left_pos]->ToNumber(left_value)) ||
+        (!pool[right_pos]->ToNumber(right_value))) {
+      return pool.Add(new NaNObject());
     };
     if (IsInt(left_value) && IsInt(left_value)) {
-      Object *res = new NumericObject(
+      return pool.Add(new NumericObject(
         (int)(left_value) >> (int)(right_value)
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else {
       return left_pos;
     }
   } else if (_operator == U"==") {
     if (left_pos == right_pos) {
-      Object *res = new BooleanObject(true);
-      pool.push_back(res);
-      return pool.size() - 1;
-    } else if (pool.At(left_pos)->type == ObjectType::StringObject ||
-        pool.At(right_pos)->type == ObjectType::StringObject) {
-      String left_value, right_value;
-      if ((!pool.At(left_pos)->ToString(left_value)) ||
-          (!pool.At(right_pos)->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
-      };
-      Object *res = new BooleanObject(
-        left_value == right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
-    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
-               pool[right_pos]->type == ObjectType::NumericObject) {
-      Number left_value, right_value;
-      if ((!pool[left_pos]->ToNumber(left_value)) ||
-          (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
-      };
-      Object *res = new BooleanObject(
-        left_value == right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
-    } else {
-      Object *res = new BooleanObject(
-        false
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
-    }
-  } else if (_operator == U"!=") {
-    if (left_pos == right_pos) {
-      Object *res = new BooleanObject(false);
-      pool.push_back(res);
-      return pool.size() - 1;
+      return pool.Add(new BooleanObject(true));
     } else if (pool[left_pos]->type == ObjectType::StringObject ||
         pool[right_pos]->type == ObjectType::StringObject) {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
-        left_value != right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      return pool.Add(new BooleanObject(
+        left_value == right_value
+      ));
     } else if (pool[left_pos]->type == ObjectType::NumericObject ||
                pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
-        left_value != right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      return pool.Add(new BooleanObject(
+        left_value == right_value
+      ));
     } else {
-      Object *res = new BooleanObject(
-        true
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      return pool.Add(new BooleanObject(false));
+    }
+  } else if (_operator == U"!=") {
+    if (left_pos == right_pos) {
+      return pool.Add(new BooleanObject(false));
+    } else if (pool[left_pos]->type == ObjectType::StringObject ||
+        pool[right_pos]->type == ObjectType::StringObject) {
+      String left_value, right_value;
+      if ((!pool[left_pos]->ToString(left_value)) ||
+          (!pool[right_pos]->ToString(right_value))) {
+        return pool.Add(new NaNObject());
+      };
+      return pool.Add(new BooleanObject(
+        left_value != right_value
+      ));
+    } else if (pool[left_pos]->type == ObjectType::NumericObject ||
+               pool[right_pos]->type == ObjectType::NumericObject) {
+      Number left_value, right_value;
+      if ((!pool[left_pos]->ToNumber(left_value)) ||
+          (!pool[right_pos]->ToNumber(right_value))) {
+        return pool.Add(new NaNObject());
+      };
+      return pool.Add(new BooleanObject(
+        left_value != right_value
+      ));
+    } else {
+      return pool.Add(new BooleanObject(true));
     }
   } else if (_operator == U"===") {
     if (pool[left_pos]->type == pool[right_pos]->type) {
@@ -1452,24 +1388,16 @@ int BinaryExpression::Execute() {
         String left_value, right_value;
         pool[left_pos]->ToString(left_value);
         pool[right_pos]->ToString(right_value);
-        Object *res = new BooleanObject(
+        return pool.Add(new BooleanObject(
           left_value == right_value
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
+        ));
       } else {
-        Object *res = new BooleanObject(
+        return pool.Add(new BooleanObject(
           left_pos == right_pos
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
+        ));
       }
     } else {
-      Object *res = new BooleanObject(
-        false
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      return pool.Add(new BooleanObject(false));
     }
   } else if (_operator == U"!==") {
     if (pool[left_pos]->type == pool[right_pos]->type) {
@@ -1479,24 +1407,18 @@ int BinaryExpression::Execute() {
         String left_value, right_value;
         pool[left_pos]->ToString(left_value);
         pool[right_pos]->ToString(right_value);
-        Object *res = new BooleanObject(
+        return pool.Add(new BooleanObject(
           left_value != right_value
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
+        ));
       } else {
-        Object *res = new BooleanObject(
+        return pool.Add(new BooleanObject(
           left_pos != right_pos
-        );
-        pool.push_back(res);
-        return pool.size() - 1;
+        ));
       }
     } else {
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         true
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U"<") {
     if (pool[left_pos]->type == ObjectType::StringObject ||
@@ -1504,29 +1426,21 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value < right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else if (pool[left_pos]->type == ObjectType::NumericObject ||
                pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value < right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U"<=") {
     if (pool[left_pos]->type == ObjectType::StringObject ||
@@ -1534,29 +1448,21 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value <= right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else if (pool[left_pos]->type == ObjectType::NumericObject ||
                pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value <= right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U">=") {
     if (pool[left_pos]->type == ObjectType::StringObject ||
@@ -1564,29 +1470,21 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value >= right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else if (pool[left_pos]->type == ObjectType::NumericObject ||
                pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value >= right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U">") {
     if (pool[left_pos]->type == ObjectType::StringObject ||
@@ -1594,29 +1492,21 @@ int BinaryExpression::Execute() {
       String left_value, right_value;
       if ((!pool[left_pos]->ToString(left_value)) ||
           (!pool[right_pos]->ToString(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value > right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     } else if (pool[left_pos]->type == ObjectType::NumericObject ||
                pool[right_pos]->type == ObjectType::NumericObject) {
       Number left_value, right_value;
       if ((!pool[left_pos]->ToNumber(left_value)) ||
           (!pool[right_pos]->ToNumber(right_value))) {
-        Object *res = new NaNObject();
-        pool.push_back(res);
-        return pool.size() - 1;
+        return pool.Add(new NaNObject());
       };
-      Object *res = new BooleanObject(
+      return pool.Add(new BooleanObject(
         left_value > right_value
-      );
-      pool.push_back(res);
-      return pool.size() - 1;
+      ));
     }
   } else if (_operator == U"&&") {
     if (IsFalse(left_pos)) {
@@ -1631,9 +1521,7 @@ int BinaryExpression::Execute() {
       return right_pos;
     }
   }
-  Object *res = new NaNObject();
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(new NaNObject());
 }
 
 int BlockStatement::Execute() {
@@ -1650,34 +1538,24 @@ int WhileStatement::Execute() {
     body->Execute();
     ret += 1;
   }
-  NumericObject* num = new NumericObject(ret);
-  pool.push_back(num);
-  return pool.size() - 1;
+  return pool.Add(new NumericObject(ret));
 }
 
 int NumericLiteral::Execute() {
-  Object *res = new NumericObject(value);
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(new NumericObject(value));
 }
 
 int StringLiteral::Execute() {
-  Object *res = new StringObject(value);
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(new StringObject(value));
 }
 
 int BooleanLiteral::Execute() {
-  Object *res = new BooleanObject(value);
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(new BooleanObject(value));
 }
 
 
 int NullLiteral::Execute() {
-  Object *res = new NullObject();
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(new NullObject());
 }
 
 int IfStatement::Execute() {
@@ -1699,14 +1577,13 @@ int FunctionExpression::Execute() {
   if (id != nullptr) {
     name = ((Identifier*)id)->name;
   }
-  Object *res = new FunctionObject(name, (BlockStatement*)body, _params);
-  pool.push_back(res);
+  int idx = pool.Add(new FunctionObject(name, (BlockStatement*)body, _params));
   if (id != NULL) {
-    current_context->var_table[id->name] = pool.size() - 1;
+    current_context->var_table[id->name] = idx;
     DEBUG << id->name << " is set to " <<
              pool[current_context->LookUp(id->name)] << endl;
   }
-  return pool.size() - 1;
+  return idx;
 }
 
 int ObjectExpression::Execute() {
@@ -1715,10 +1592,9 @@ int ObjectExpression::Execute() {
     _properties[tmp.first->value] =
       tmp.second->Execute();
   }
-  Object *res = new Object(ObjectType::Object);
+  Object* res = new Object(ObjectType::Object);
   res->properties = _properties;
-  pool.push_back(res);
-  return pool.size() - 1;
+  return pool.Add(res);
 }
 /*
 struct ObjectExpression: Expression {
