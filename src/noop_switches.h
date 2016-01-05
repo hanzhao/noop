@@ -6,6 +6,8 @@ namespace Switches {
 extern const char kSwitchEval[];
 extern const char kSwitchPrint[];
 extern const char kSwitchVerbose[];
+extern const char kSwitchDisableGC[];
+extern const char kSwitchReportPoolUsage[];
 extern const char kSwitchHelp[];
 extern const char kSwitchVersion[];
 

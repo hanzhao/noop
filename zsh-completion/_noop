@@ -8,6 +8,8 @@ _arguments -C \
   '(- 1 *)--version[print noop version]' \
   '(- 1 *)--eval[evaluate script]:Inline Script' \
   '(- 1 *)--print[print result of --eval]' \
+  '(- 1 *)--disable-gc[make gc diable]' \
+  '(- 1 *)--report-pool-usage[report used memory in pool]' \
   '(- 1 *)--verbose[show debug information]' \
   '*:JS Script:_files -g "*.js"' && ret=0
 

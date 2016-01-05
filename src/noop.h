@@ -12,10 +12,12 @@
 
 namespace noop {
 
-extern int debug;
-#define DEBUG if (noop::debug) \
+extern bool noop_debug_;
+extern bool noop_disable_gc_;
+extern bool noop_report_pool_usage_;
+#define DEBUG if (noop::noop_debug_) \
   std::cout << "\033[1m\033[32m[" << __FILE__ << ":" << __LINE__ << "]\033[0m "
-#define STDOUT (noop::debug ? \
+#define STDOUT (noop::noop_debug_ ? \
   std::cout << "\033[1m\033[34m[" << __FILE__ << ":" << __LINE__ << "]\033[0m " : \
   std::cout << "")
 

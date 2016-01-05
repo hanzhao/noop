@@ -101,13 +101,16 @@ void Pool::CollectGarbage() {
   }
   Mark(global_);
   Sweep();
+}
+
+void Pool::ReportUsage() {
   int count = 0;
   for (size_t i = 0; i < pool->size(); ++i) {
-    if ((*pool)[i] == nullptr) {
+    if ((*pool)[i] != nullptr) {
       ++count;
     }
   }
-  DEBUG << "GC: Collect " << count << " / " << pool->size() << endl;
+  DEBUG << "Pool using " << count << ", allocated " << pool->size() << endl;
 }
 
 }; // noop

@@ -1213,7 +1213,12 @@ int CallExpression::Execute() {
   current_context = old_context;
   // XXX: Function ret need an reference to avoiding gc
   current_context->var_table[U".ret" + node_id] = ret;
-  pool.CollectGarbage();
+  if (!noop::noop_disable_gc_) {
+    pool.CollectGarbage();
+  }
+  if (noop::noop_report_pool_usage_) {
+    pool.ReportUsage();
+  }
   return ret;
 }
 

@@ -232,6 +232,7 @@ struct Pool {
   void Sweep();
   void Mark(Context* ctx);
   void MarkObject(size_t id);
+  void ReportUsage();
   Object* &operator [] (const size_t pos) {
     return (*pool)[pos];
   }

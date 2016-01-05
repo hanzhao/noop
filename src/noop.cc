@@ -10,14 +10,18 @@
 using namespace std;
 
 namespace noop {
-  int debug = 0;
+  bool noop_debug_ = false;
+  bool noop_disable_gc_ = false;
+  bool noop_report_pool_usage_ = false;
   int PrintHelp() {
     cout << "Usage: noop [options] [ --eval script | script.js ]" << endl
                                                                   << endl;
     cout << "Options: " << endl;
-    cout << "--eval script     evaluate script" << endl;
-    cout << "--print           evaluate script and print result" << endl;
-    cout << "--verbose         run in verbose mode and show debug logs" << endl;
+    cout << "--eval script         evaluate script" << endl;
+    cout << "--print               evaluate script and print result" << endl;
+    cout << "--disable-gc          make gc disable" << endl;
+    cout << "--report-pool-usage   report used memory in pool" << endl;
+    cout << "--verbose             run in verbose mode and show debug logs" << endl;
     return 0;
   }
   int PrintVersion() {
@@ -36,7 +40,13 @@ int main(int argc, const char* argv[]) {
   // Not executable options
   for (auto it = args.begin(); it != args.end(); ) {
     if (*it == noop::Switches::kSwitchVerbose) {
-      noop::debug = 1;
+      noop::noop_debug_ = true;
+      it = args.erase(it);
+    } else if (*it == noop::Switches::kSwitchDisableGC) {
+      noop::noop_disable_gc_ = true;
+      it = args.erase(it);
+    } else if (*it == noop::Switches::kSwitchReportPoolUsage) {
+      noop::noop_report_pool_usage_ = true;
       it = args.erase(it);
     } else {
       ++it;
