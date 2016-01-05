@@ -7,6 +7,7 @@ namespace noop {
 namespace Core {
 
 int ExecuteFromFile(std::string script);
+int REPL();
 
 } // namespace Core
 } // namespace noop

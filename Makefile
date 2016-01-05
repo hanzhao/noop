@@ -1,5 +1,6 @@
 CXX = clang++
 CXXFLAGS = -O -W -Wall -Werror -O2 -g --std=c++11
+LIBS = -lreadline
 LINK = $(CXX)
 
 ALL_INCS = -I src
@@ -28,7 +29,7 @@ ALL_OBJS = $(SRC_PATH)/noop.o \
 
 
 noop: $(ALL_OBJS)
-	$(LINK) $(ALL_OBJS) -o noop
+	$(LINK) $(ALL_OBJS) -o noop $(LIBS)
 
 $(SRC_PATH)/%.o: $(SRC_PATH)/%.cc $(ALL_DEPS)
 	$(CXX) $(CXXFLAGS) $(ALL_INCS) -c $< -o $@

@@ -47,7 +47,7 @@ struct Object {
       if (i) res += U", ";
       res += property.first;
       res += U": ";
-      if (((Object*)(pool_head) + property.second)->ToString(value)) {
+      if ((*((((std::vector<Object*>*)pool_head)->begin()) + property.second))->ToString(value)) {
         res += value;
       } else {
         return false;

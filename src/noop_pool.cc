@@ -23,6 +23,8 @@ size_t Object::JumpToProperty(String pro) {
 void* pool_head;
 Pool pool;
 void PoolInit(Pool& pool, Context* global) {
+  pool_head = &pool;
+  /* undefined */
   Object* undefined_obj = new UndefinedObject();
   pool.push_back(undefined_obj);
   /* console.log */

@@ -3,6 +3,7 @@
 
 #include <noop.h>
 
+#include <string>
 
 namespace noop {
 
@@ -15,6 +16,16 @@ String UTF8ToUTF32(std::string u8_str);
 std::string UTF32ToUTF8(String u32_str);
 
 } // namespace Encoding
+
+namespace Console {
+
+bool ReadLine(std::string& dest, std::string prompt);
+
+int InitializeHistory();
+
+int SaveHistory();
+
+} // namespace Console
 
 } // namespace noop
 

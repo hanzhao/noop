@@ -1032,15 +1032,15 @@ int ExpressionStatement::Execute() {
 
 int Body::Execute() {
   int ret;
-  current_context = new Context(current_context);
-  DEBUG << "Body Execute: switching context " << current_context->father <<
-    " to " << current_context << endl;
+//  current_context = new Context(current_context);
+//  DEBUG << "Body Execute: switching context " << current_context->father <<
+//    " to " << current_context << endl;
   for (auto& statement: statements) {
     ret = statement->Execute();
   }
-  DEBUG << "Body Execute end: switching context " << current_context <<
-    " to " << current_context->father << endl;
-  current_context = current_context->father;
+//  DEBUG << "Body Execute end: switching context " << current_context <<
+//    " to " << current_context->father << endl;
+//  current_context = current_context->father;
   return ret;
 }
 

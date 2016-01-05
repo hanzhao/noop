@@ -25,8 +25,8 @@ bool IsIdentifierHead(Char c) {
   return
     // identifier-head → Upper- or lowercase letter A through Z
     (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') ||
-    // identifier-head → _­
-    (c == '_') ||
+    // identifier-head → _­, $
+    (c == '_') || (c == '$') ||
     // identifier-head → U+00A8, U+00AA, U+00AD, U+00AF, U+00B2–U+00B5, or U+00B7–U+00BA
     (c == 0x00A8) || (c == 0x00AA) || (c == 0x00AD) || (c == 0x00AF) ||
     (c >= 0x00B2 && c <= 0x00B5) || (c >= 0x00B7 && c <= 0x00BA) ||

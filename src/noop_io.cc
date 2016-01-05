@@ -5,6 +5,9 @@
 #include <locale>
 #include <string>
 
+#include <readline/readline.h>
+#include <readline/history.h>
+
 using namespace std;
 
 namespace noop {
@@ -19,6 +22,31 @@ namespace Encoding {
     return cvtDelegate.to_bytes(u32_str);
   }
 } // namespace Encoding
+
+namespace Console {
+/* Read a string and return it.  Returns false on EOF, otherwise true. */
+bool ReadLine(string& dest, string prompt) {
+  char* line_read = (char *)NULL;
+  /* Get a line from the user. */
+  line_read = readline(prompt.c_str());
+  /* EOF */
+  if (line_read == NULL)
+    return false;
+  /* If the line has any text in it, save it on the history. */
+  if (*line_read)
+    add_history(line_read);
+  /* Save string. */
+  dest = line_read;
+  free(line_read);
+  return true;
+}
+int InitializeHistory() {
+  return read_history(NULL);
+}
+int SaveHistory() {
+  return write_history(NULL);
+}
+}  // namespace Console
 
 ostream& operator <<(ostream& out, const String u32_str) {
   string u8_str = Encoding::UTF32ToUTF8(u32_str);

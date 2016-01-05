@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <sstream>
 
 #include <noop.h>
 #include <noop_context.h>
@@ -50,6 +51,44 @@ int ExecuteFromFile(string script) {
   DEBUG << "Look up true " << body->LookUp(U"true") << endl;
   DEBUG << "Look up false " << body->LookUp(U"false") << endl;
   */
+  return 0;
+}
+
+int REPL() {
+  string content = "";
+  String code; // For utf-32
+  int ret;
+  int seq = 0;
+  noop::Console::InitializeHistory();
+  noop::PoolInit(pool, global_context);
+  STDOUT << "noop v" << NOOP_VERSION_MAJOR << '.' <<
+                       NOOP_VERSION_MINOR << '.' <<
+                       NOOP_VERSION_PATCH << endl;
+  while (Console::ReadLine(content, "> ")) {
+    if (content == ".exit") { break; }
+    ret = 0;
+    code = Encoding::UTF8ToUTF32(content);
+    try {
+      ret = Parser().ParseProgram(code)->Execute();
+      ++seq;
+      string _id = "";
+      String str = U"", id = U"";
+      stringstream sin;
+      sin << "$" << seq;
+      sin >> _id;
+      id = Encoding::UTF8ToUTF32(_id);
+      pool[ret]->ToString(str);
+      // $1 = ???
+      global_context->var_table[id] = ret;
+      // _ = ???
+      global_context->var_table[U"_"] = ret;
+      STDOUT << id << " = " << str << endl;
+    } catch (runtime_error& e) {
+      STDOUT << "Runtime Error: " << e.what() << endl;
+    }
+  }
+  noop::Console::SaveHistory();
+  STDOUT << "bye" << endl;
   return 0;
 }
 
