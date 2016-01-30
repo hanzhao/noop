@@ -1,4 +1,4 @@
-Noop.js++
+Noop.js
 ===
 
 Maybe it wants to be a Node.js, but nothing it can do.
@@ -22,22 +22,18 @@ ArchLinux
 pacman -S readline
 ```
 
-## Goals
+## Build
 
-+ Variable definition and assignment
-  - var
-+ Expression and Statement
-  - =
-  - \+ - \* / %
-  - ()
-  - \> \>= < <= == != ===
-  - && || !
-+ I/O
-  - console.read
-  - console.log
-+ Conditional statement
-  - if ... else ...
-  - while ...
-+ Function definition and evaluation
-  - function func(...arguments) { /\*function body\*/ }
-+ Object
+```sh
+make
+```
+
+## Run
+
+```sh
+./noop --help
+```
+
+## Samples
+
+Mostly, a simple JavaScript source code is acceptable. You can find some samples [here](https://github.com/magicae/noop/tree/master/test/samples).
